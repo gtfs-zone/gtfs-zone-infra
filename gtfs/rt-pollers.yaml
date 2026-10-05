@@ -1,10 +1,11 @@
 # ── rt-pollers (external feed pollers) ────────────────────────────────────────
-# Two Deployments off one image, one per SOURCE. Each polls an upstream operator
+# Three Deployments off one image, one per SOURCE. Each polls an upstream operator
 # feed and POSTs to rt-api's /ingest/* with a shared bearer token; they do NOT
 # go through Traccar or Redis directly.
 #
 #   amtrak    → Amtrak's getTrainsData blob
 #   buswhere  → Columbia County's buswhere API + its published GTFS
+#   hudsonlink → CoachUSA's journey API for Hudson Link + its 511NY GTFS
 #
 # INGEST_TRACKER_ID must equal a provisioned Tracker.id in the target feed: the
 # opaque uuid4 hex surrogate key, never the human-readable device_key. rt-api
@@ -95,6 +96,40 @@ spec:
             # latter 302s and rt-pollers' httpx client does not follow redirects.
             - name: GTFS_URL
               value: https://raw.githubusercontent.com/columbia-county-ny-transit/gtfs-generator/refs/heads/main/columbia_county_gtfs.zip
+            - name: RT_API_INGEST_URL
+              value: http://gtfs-api:8000
+            - name: INGEST_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: INGEST_API_TOKEN
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rt-pollers-hudsonlink
+  namespace: gtfs
+  labels:
+    app: rt-pollers-hudsonlink
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rt-pollers-hudsonlink
+  template:
+    metadata:
+      labels:
+        app: rt-pollers-hudsonlink
+    spec:
+      containers:
+        - name: rt-pollers
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.3.0
+          env:
+            - name: SOURCE
+              value: hudsonlink
+            - name: INGEST_TRACKER_ID
+              # Tracker.id for the hudsonlink feed's "Hudson Link" tracker.
+              value: bf1d947a25ef451fb579867d93b60765
             - name: RT_API_INGEST_URL
               value: http://gtfs-api:8000
             - name: INGEST_API_TOKEN
