@@ -21,6 +21,9 @@
 #
 # Re-provisioning a tracker mints a new id, so these have to be re-read then.
 #
+# Each poller reports its upstream's health to the Gatus external endpoint
+# named by GATUS_ENDPOINT_KEY (see the Pollers group in gatus/config.yaml).
+#
 # Deliberately NO PersistentVolumeClaim on /app/beat. The image creates and chowns
 # that directory for the non-root `bridge` user at build time; mounting a volume
 # over it masks the chown and the poller dies with PermissionError writing
@@ -45,7 +48,7 @@ spec:
     spec:
       containers:
         - name: rt-pollers
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.2.0
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.0
           env:
             - name: SOURCE
               value: amtrak
@@ -63,6 +66,15 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: INGEST_API_TOKEN
+            - name: GATUS_URL
+              value: http://gatus:8080
+            - name: GATUS_ENDPOINT_KEY
+              value: pollers_amtrak-poller
+            - name: GATUS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: GATUS_POLLERS_TOKEN
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -83,7 +95,7 @@ spec:
     spec:
       containers:
         - name: rt-pollers
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.2.0
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.0
           env:
             - name: SOURCE
               value: buswhere
@@ -103,6 +115,15 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: INGEST_API_TOKEN
+            - name: GATUS_URL
+              value: http://gatus:8080
+            - name: GATUS_ENDPOINT_KEY
+              value: pollers_columbia-county-poller
+            - name: GATUS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: GATUS_POLLERS_TOKEN
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -123,7 +144,7 @@ spec:
     spec:
       containers:
         - name: rt-pollers
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.3.1
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.0
           env:
             - name: SOURCE
               value: hudsonlink
@@ -137,3 +158,12 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: INGEST_API_TOKEN
+            - name: GATUS_URL
+              value: http://gatus:8080
+            - name: GATUS_ENDPOINT_KEY
+              value: pollers_hudson-link-poller
+            - name: GATUS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: GATUS_POLLERS_TOKEN

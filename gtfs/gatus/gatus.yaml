@@ -65,6 +65,12 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: GATUS_TIMETABLE_SITES_TOKEN
+            # Bearer token the rt-pollers push their upstream heartbeats with.
+            - name: GATUS_POLLERS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: GATUS_POLLERS_TOKEN
           volumeMounts:
             - name: config
               mountPath: /config

@@ -319,3 +319,35 @@ external-endpoints:
     alerts:
       - type: telegram
         failure-threshold: 1
+
+  # Each rt-poller POSTs to /api/v1/endpoints/pollers_<name>/external every
+  # cycle, throttled to one push per minute while unchanged: success when its
+  # upstream answered (empty is fine), failure when it could not be read.
+  # 5 failures is about 5 min of upstream errors; 5 missed 5m heartbeats is a
+  # poller that has died or hung.
+  - name: Amtrak poller
+    group: Pollers
+    token: "${GATUS_POLLERS_TOKEN}"
+    heartbeat:
+      interval: 5m
+    alerts:
+      - type: telegram
+        failure-threshold: 5
+
+  - name: Columbia County poller
+    group: Pollers
+    token: "${GATUS_POLLERS_TOKEN}"
+    heartbeat:
+      interval: 5m
+    alerts:
+      - type: telegram
+        failure-threshold: 5
+
+  - name: Hudson Link poller
+    group: Pollers
+    token: "${GATUS_POLLERS_TOKEN}"
+    heartbeat:
+      interval: 5m
+    alerts:
+      - type: telegram
+        failure-threshold: 5
