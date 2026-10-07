@@ -642,6 +642,10 @@ sops gtfs/secrets/gtfs-app-secrets.enc.yaml
 key must also exist in-cluster as the `sops-age` Secret in the `argocd`
 namespace: that is the one piece of out-of-band bootstrap this design needs.
 
+The same ArgoCD also renders `maxtkc/home-docker`, which has its own age key.
+`keys.txt` in `sops-age` therefore holds both identities, one per line, and a
+recreate of the Secret must keep both.
+
 Populate at minimum:
 
 - `infra/secrets/`: Porkbun API key/secret, once per consuming namespace

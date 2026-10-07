@@ -40,6 +40,10 @@ configs:
     # it is wrong. It sat at the chart default https://argocd.example.com until
     # SSO was added.
     url: https://argocd.gtfs.zone
+    # Alias served from maxtkc/home-docker (home/argocd-alias). Listed so SSO
+    # builds its redirect_uri from whichever host the login started on.
+    additionalUrls: |
+      - https://argocd.kcfam.us
 
     # Break-glass, deliberately left on. Keycloak runs in the `gtfs` namespace
     # against the CNPG cluster this ArgoCD deploys, so an SSO-only ArgoCD has no

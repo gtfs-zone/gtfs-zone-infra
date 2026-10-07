@@ -106,9 +106,10 @@
       "serviceAccountsEnabled": false,
       "redirectUris": [
         "https://argocd.gtfs.zone/auth/callback",
+        "https://argocd.kcfam.us/auth/callback",
         "http://localhost:8085/auth/callback"
       ],
-      "webOrigins": ["https://argocd.gtfs.zone"],
+      "webOrigins": ["https://argocd.gtfs.zone", "https://argocd.kcfam.us"],
       "defaultClientScopes": [
         "acr",
         "basic",
