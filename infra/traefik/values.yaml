@@ -26,6 +26,10 @@ ports:
       default: true
     tls:
       enabled: true
+    # Default readTimeout is 60s, which cuts off large uploads (Immich videos).
+    transport:
+      respondingTimeouts:
+        readTimeout: 3600s
   # Internal dashboard/ping entrypoint, never exposed on the host.
   traefik:
     expose:
