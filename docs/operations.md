@@ -93,8 +93,8 @@ status page and nothing surfaced it. Adding a check is an edit to
 rolls the Deployment. Gatus stores history in memory only: no PVC, no database,
 history resets on restart.
 
-Alerts go to Telegram, to the same `@kcfam_bot` and chat that home-docker's
-Uptime Kuma uses, so gtfs.zone and kcfam.us page the same place. The token and
+Alerts go to Telegram, to the same `@kcfam_bot` and chat that kcfam.us's
+Gatus uses, so gtfs.zone and kcfam.us page the same place. The token and
 chat id live in `gtfs-app-secrets` (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`)
 and reach the config as `${VAR}`, so they never enter the ConfigMap. Note that
 `default-alert` under the provider is a **template, not an opt-out**: an endpoint

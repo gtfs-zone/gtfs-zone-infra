@@ -1,27 +1,27 @@
 ## infra/traefik/values.yaml: Helm values for the Traefik chart.
 ##
-## This is the k3s edge that terminates TLS for *.gtfs.zone. home-docker Traefik
-## still owns the host's 80/443 and SNI-passthroughs *.gtfs.zone to us on host
-## port **8443** (see CURRENT_PLAN.md Phase 7). Therefore:
-##   - We expose ONLY a `websecure` entrypoint, and only on host **8443**.
-##   - We MUST NOT expose :80 or :443 on the host (would collide with the Docker
-##     Traefik). k3s ServiceLB (klipper) binds the Service port on the host, so
-##     the LoadBalancer Service must publish 8443 and nothing else.
-##   - No ACME here; certificates come from cert-manager as Secrets.
+## This is the host's edge: k3s ServiceLB (klipper) binds the LoadBalancer
+## Service ports on the node, `web` on :80 (redirects to https) and `websecure`
+## on :443. It terminates TLS for gtfs.zone and kcfam.us.
+##   - No ACME here; certificates come from cert-manager (DNS-01) as Secrets.
 
 deployment:
   kind: Deployment
   replicas: 1
 
-# Only the websecure entrypoint is exposed to the host; klipper binds `exposedPort`
-# (8443) on the node. `web` (:80) is kept internal-only so it never claims host :80.
 ports:
   web:
+    exposedPort: 80
     expose:
-      default: false
+      default: true
+    redirections:
+      entryPoint:
+        to: websecure
+        scheme: https
+        permanent: true
   websecure:
     port: 8443
-    exposedPort: 8443
+    exposedPort: 443
     expose:
       default: true
     tls:

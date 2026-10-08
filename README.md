@@ -344,14 +344,12 @@ erDiagram
 ### Service routing
 
 Hostname routing from the internet through to each service, with data-layer
-connections. The edge is home-docker's Traefik, which passes `*.gtfs.zone`
-through untouched by SNI; the cluster's own Traefik terminates TLS.
+connections. The cluster's Traefik is the host's edge and terminates TLS.
 
 ```mermaid
 stateDiagram-v2
     Internet : Internet
-    edge : home-docker Traefik<br>owns :80/:443 · SNI passthrough for *.&ltdomain&gt
-    tr : k3s Traefik<br>websecure :8443 · TLS from cert-manager
+    tr : k3s Traefik<br>:80 redirect · websecure :443 · TLS from cert-manager
     tc : Traccar<br>:8082 console · :5055 osmand
     gt : Gatus
     ag : ArgoCD
@@ -377,8 +375,7 @@ stateDiagram-v2
     }
 
     [*] --> Internet
-    Internet --> edge
-    edge --> tr : *.&ltdomain&gt (passthrough)
+    Internet --> tr : :80 / :443
 
     tr --> cp : rt.&ltdomain&gt
     tr --> op : manage.rt / auth.&ltdomain&gt
@@ -642,7 +639,7 @@ sops gtfs/secrets/gtfs-app-secrets.enc.yaml
 key must also exist in-cluster as the `sops-age` Secret in the `argocd`
 namespace: that is the one piece of out-of-band bootstrap this design needs.
 
-The same ArgoCD also renders `maxtkc/home-docker`, which has its own age key.
+The same ArgoCD also renders `maxtkc/kcfam-infra`, which has its own age key.
 `keys.txt` in `sops-age` therefore holds both identities, one per line, and a
 recreate of the Secret must keep both.
 

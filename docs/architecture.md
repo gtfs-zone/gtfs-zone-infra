@@ -15,7 +15,7 @@ sidecar on the argocd-repo-server.
   platform component = adding one file here. Infra charts use the multi-source
   pattern: upstream chart + `$values/infra/<comp>/values.yaml` from this repo.
 - `infra/`: cluster platform pieces (Helm value overlays + a few raw CRs):
-  `longhorn/` (storage), `traefik/` (edge, host :8443), `cert-manager/`
+  `longhorn/` (storage), `traefik/` (edge, host :80/:443), `cert-manager/`
   (operator + Porkbun DNS-01 webhook values + `manifests/` ClusterIssuer &
   Certificate), `external-dns/` (Porkbun webhook provider), `cnpg/`
   (CloudNativePG operator), `argocd/` (ArgoCD's own Helm values + KSOPS sidecar,
@@ -49,12 +49,10 @@ Namespaces: `gtfs`, `sites`, `argocd`, `cert-manager`, `traefik`,
 
 ```
 Internet :80/:443
-   └─ home-docker Traefik (Docker, still owns 80/443)
-        ├─ *.kcfam.us -> terminated locally
-        └─ *.gtfs.zone -> TCP SNI passthrough -> 172.18.0.1:8443
-                                                   │
-   k3s single node ─────────────────────────────────┘
-     Traefik (Helm), websecure entrypoint on host :8443 via ServiceLB
+   │
+   k3s single node
+     Traefik (Helm), web (:80, redirect) and websecure (:443) on the host via ServiceLB
+       ├─ kcfam.us IngressRoutes (maxtkc/kcfam-infra, namespace home)
        └─ IngressRoute: rt, manage.rt, id, auth, status, traccar,
           data + sites (Garage s3_web :3902), dagster (oauth2-proxy-admin),
           list (from sites/)
@@ -81,7 +79,7 @@ positions and an **empty `trip_updates.pb`**.
 
 | Layer | What runs |
 |---|---|
-| Edge | Traefik (Helm), `websecure` on host :8443; `IngressRoute`/`Middleware` CRDs |
+| Edge | Traefik (Helm), `web` and `websecure` on host :80/:443; `IngressRoute`/`Middleware` CRDs |
 | TLS / DNS | cert-manager + Porkbun DNS-01 webhook; external-dns (Porkbun webhook) |
 | Storage | Longhorn (default StorageClass, 1 replica) |
 | Object storage | Garage (single-node StatefulSet; `garage-init` PostSync Job applies the layout, buckets and keys). Three buckets, each with its own key: `gtfs-feeds` is private, S3 API cluster-internal only (uploaded zips); `data.gtfs.zone` and `sites.gtfs.zone` are public, served read-only over HTTP by Garage's `s3_web` endpoint at their own hostnames (feed-catalog's artifacts, timetable-sites' timetable sites; `sites` goes through a Traefik `compress` middleware) |
