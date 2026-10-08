@@ -41,6 +41,9 @@ providers:
     # Allow IngressRoutes to reference Middlewares/TLS Secrets across namespaces
     # (e.g. the argocd route lives in the argocd namespace).
     allowCrossNamespace: true
+    # kcfam.us routes to Docker services on the host (home/docker-apps in
+    # maxtkc/kcfam-infra) through ExternalName Services with an IP.
+    allowExternalNameServices: true
   # We do not use plain Ingress objects.
   kubernetesIngress:
     enabled: false
