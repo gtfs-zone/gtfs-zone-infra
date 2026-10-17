@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
         - name: rt-delay-estimator
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-delay-estimator:v0.2.0
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-delay-estimator:v0.3.1
           env:
             # DB1: where rt-traccar-receiver and rt-api's /ingest write positions.
             - name: REDIS_URL
