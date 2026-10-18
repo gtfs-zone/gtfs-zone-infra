@@ -33,7 +33,7 @@ resources:
 # Written by feed-catalog's CI after it pushes, so what is deployed is the
 # digest of exactly what was built rather than a moving tag.
 images:
-- digest: sha256:e7a7c038df3a3fd86a9ea0d177bdddc52c65598358138bae4812ad3fc1828eba
+- digest: sha256:81b3451d9113cfe3ada3a9201af61047e8e5e6c563be500f4cb1d0549c465e40
   name: ghcr.io/gtfs-zone/gtfs-zone-feed-catalog
   newName: ghcr.io/gtfs-zone/gtfs-zone-feed-catalog
 - digest: sha256:8a289423e602332332f003444b404451ab16d0213eb46e7cc2f5b2caa878fe47
