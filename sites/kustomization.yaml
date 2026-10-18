@@ -19,7 +19,7 @@ resources:
 - rt-manager.yaml
 - feed-list.yaml
 images:
-- digest: sha256:dec9c800a8f75f12a85f73d4a8b096fb02d9abbee3e57bfc0a09a783614a9a56
+- digest: sha256:7e8dd80711682c6ba12cf07a60b14068102faed62602ce84fba61cbfc970e834
   name: ghcr.io/gtfs-zone/gtfs-zone-feed-list
   newName: ghcr.io/gtfs-zone/gtfs-zone-feed-list
 - digest: sha256:76b7164c6e25beb4f06f2011cb17c9310f50face0907f01ccdacfd1c57a1d47a
