@@ -134,6 +134,10 @@ Note Traefik's `errors` middleware serves the sign-in page **while preserving th
 original 401 status code**: a 401 whose body is oauth2-proxy's Sign In page is
 correct behaviour, not a failure.
 
+A gated host also needs an unprotected `Path(`/robots.txt`)` route (see
+`manage-rt` and `dagster` in `gtfs/ingressroutes.yaml`). Crawlers read a 401 on
+robots.txt as "no robots.txt", crawl every gated URL and report each 401.
+
 **Adding a hostname:** add an `IngressRoute` with the
 `external-dns.alpha.kubernetes.io/target: "73.4.232.254"` annotation; external-dns
 creates the Porkbun record from it. Remember a DNS wildcard matches exactly **one**

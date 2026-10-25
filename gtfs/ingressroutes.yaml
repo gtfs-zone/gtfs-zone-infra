@@ -10,7 +10,8 @@
 # labels. Public by design: rt (the GTFS-RT feed), status (the Gatus status page),
 # id + auth (the login flow itself), data (feed-catalog's published artifacts),
 # sites (timetable-sites' timetable sites)
-# and both Traccar routes.
+# and both Traccar routes. The gated hosts (manage.rt, dagster) each also serve
+# /robots.txt unauthenticated.
 #
 # TLS reaches this cluster untouched: home-docker's Traefik does SNI passthrough
 # for *.gtfs.zone, so k3s owns gtfs.zone certificates end to end.
@@ -42,6 +43,14 @@ metadata:
 spec:
   entryPoints: [websecure]
   routes:
+    # robots.txt must bypass ForwardAuth: crawlers have no session, and a 401
+    # here reads as "no robots.txt" and lets them crawl every gated URL.
+    - match: Host(`manage.rt.gtfs.zone`) && Path(`/robots.txt`)
+      kind: Rule
+      services:
+        - name: rt-manager
+          namespace: sites
+          port: 80
     # oauth2-proxy's own endpoints (sign_in page, /static assets, /callback) must
     # bypass ForwardAuth, otherwise the sign-in page's CSS/JS re-enter the auth
     # chain and come back as 401 HTML. Traefik prefers the longer rule.
@@ -299,6 +308,13 @@ metadata:
 spec:
   entryPoints: [websecure]
   routes:
+    # oauth2-proxy's built-in robots.txt (Disallow: /), past ForwardAuth for the
+    # same reason as on manage.rt.
+    - match: Host(`dagster.gtfs.zone`) && Path(`/robots.txt`)
+      kind: Rule
+      services:
+        - name: oauth2-proxy-admin
+          port: 4180
     # Unprotected and longer, so Traefik prefers it: the sign-in page's own CSS
     # and the /callback must not re-enter the auth chain, or they come back as
     # 401 HTML and the login never completes.
