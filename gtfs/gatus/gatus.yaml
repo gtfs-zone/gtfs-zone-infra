@@ -71,6 +71,12 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: GATUS_POLLERS_TOKEN
+            # Bearer token the vuln-scan workflows push their results with.
+            - name: GATUS_VULN_SCAN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: GATUS_VULN_SCAN_TOKEN
           volumeMounts:
             - name: config
               mountPath: /config

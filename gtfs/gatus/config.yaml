@@ -351,3 +351,91 @@ external-endpoints:
     alerts:
       - type: telegram
         failure-threshold: 5
+
+  # Each repo's vuln-scan workflow POSTs to
+  # /api/v1/endpoints/vulnerabilities_<repo>/external from main, on push and daily
+  # at 06:17 UTC: success when no lockfile has a critical (CVSS >= 9.0) finding.
+  # 30h covers one missed daily run. Shown on the page only, no alerts.
+  - name: gtfs-zone-db-models
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-editor
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-feed-catalog
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-feed-list
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-homepage
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-rt-api
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-rt-delay-estimator
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-rt-manager
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-rt-pollers
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-rt-traccar-receiver
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-rt-viewer
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-static-importer
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-timetable-sites
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-web-common
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
