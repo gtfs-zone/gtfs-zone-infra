@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
         - name: rt-pollers
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.1
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.2
           env:
             - name: SOURCE
               value: amtrak
@@ -95,7 +95,7 @@ spec:
     spec:
       containers:
         - name: rt-pollers
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.1
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.2
           env:
             - name: SOURCE
               value: buswhere
@@ -144,7 +144,7 @@ spec:
     spec:
       containers:
         - name: rt-pollers
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.1
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.2
           env:
             - name: SOURCE
               value: hudsonlink
