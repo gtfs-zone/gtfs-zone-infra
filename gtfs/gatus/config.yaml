@@ -320,6 +320,17 @@ external-endpoints:
       - type: telegram
         failure-threshold: 1
 
+  # crimes POSTs success to /api/v1/endpoints/data_crimes-publish/external after
+  # each publish; the schedule runs at 14:00 UTC.
+  - name: Crimes publish
+    group: Data
+    token: "${GATUS_CRIMES_TOKEN}"
+    heartbeat:
+      interval: 30h
+    alerts:
+      - type: telegram
+        failure-threshold: 1
+
   # Each rt-poller POSTs to /api/v1/endpoints/pollers_<name>/external every
   # cycle, throttled to one push per minute while unchanged: success when its
   # upstream answered (empty is fine), failure when it could not be read.

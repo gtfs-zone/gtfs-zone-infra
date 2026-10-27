@@ -39,3 +39,6 @@ images:
 - digest: sha256:fb27056ce70ac924a659fb5d0729e974e41ac9112984b7e9b4f317cc447f515e
   name: ghcr.io/gtfs-zone/gtfs-zone-timetable-sites
   newName: ghcr.io/gtfs-zone/gtfs-zone-timetable-sites
+- name: ghcr.io/gtfs-zone/gtfs-zone-crimes
+  newName: ghcr.io/gtfs-zone/gtfs-zone-crimes
+  newTag: v0.1.0

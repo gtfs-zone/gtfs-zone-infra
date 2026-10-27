@@ -1,5 +1,5 @@
 # feed-catalog component: the three Dagster Deployments, their two Services,
-# timetable-sites' code server as a second code location, and the instance-config
+# timetable-sites' and crimes' code servers as further code locations, and the instance-config
 # ConfigMap. Its own directory because the generator
 # hash-suffixes that ConfigMap, so editing dagster.yaml or workspace.yaml rolls
 # the pods - the gtfs/gatus/ pattern.
@@ -9,6 +9,7 @@ namespace: gtfs
 resources:
   - feed-catalog.yaml
   - timetable-sites.yaml
+  - crimes.yaml
 configMapGenerator:
   - name: feed-catalog-dagster
     files:

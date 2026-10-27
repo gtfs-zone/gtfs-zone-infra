@@ -11,3 +11,7 @@ load_from:
       host: timetable-sites-code
       port: 4000
       location_name: timetable_sites
+  - grpc_server:
+      host: crimes-code
+      port: 4000
+      location_name: crimes
