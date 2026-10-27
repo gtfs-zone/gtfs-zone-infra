@@ -73,6 +73,7 @@ data:
     gtfs-feeds      gtfs            S3_ACCESS_KEY                 S3_SECRET_KEY                 no  no
     data.gtfs.zone  feed-catalog    FEED_CATALOG_S3_ACCESS_KEY    FEED_CATALOG_S3_SECRET_KEY    yes yes
     sites.gtfs.zone timetable-sites TIMETABLE_SITES_S3_ACCESS_KEY TIMETABLE_SITES_S3_SECRET_KEY yes no
+    crimes.gtfs.zone crimes CRIMES_S3_ACCESS_KEY CRIMES_S3_SECRET_KEY yes no
     "
 
     api() {
@@ -342,6 +343,17 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: TIMETABLE_SITES_S3_SECRET_KEY
+            # crimes' pair, scoped to the crimes.gtfs.zone bucket.
+            - name: CRIMES_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: CRIMES_S3_ACCESS_KEY
+            - name: CRIMES_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: CRIMES_S3_SECRET_KEY
           volumeMounts:
             - name: config
               mountPath: /etc/garage

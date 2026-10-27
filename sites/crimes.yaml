@@ -1,0 +1,120 @@
+# ── crimes.gtfs.zone (crimes) ─────────────────────────────────────────────────
+# Static site served from an immutable image: CI builds `dist/` into
+# `ghcr.io/gtfs-zone/gtfs-zone-crimes-web` on a `v*` tag, pushes it, then
+# commits the new digest into sites/kustomization.yaml, and ArgoCD rolls it out.
+#
+# The image is `nginxinc/nginx-unprivileged` based, so it listens on :8080 as
+# uid 101 and needs no root anywhere in the chain.
+#
+# TLS: crimes.gtfs.zone is one label deep, so the `*.gtfs.zone` SAN on
+# gtfs-zone-tls covers it.
+#
+# crimes.json is not in this image: the pod's nginx proxies /data/crimes.json
+# from the crimes.gtfs.zone bucket, written daily by the crimes code location,
+# straight to Garage's web endpoint in-cluster. The bucket has no public route.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crimes
+  namespace: sites
+  labels:
+    app: crimes
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: crimes
+  template:
+    metadata:
+      labels:
+        app: crimes
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          image: ghcr.io/gtfs-zone/gtfs-zone-crimes-web
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: DATA_UPSTREAM
+              value: http://garage.gtfs.svc.cluster.local:3902
+            - name: DATA_HOST
+              value: crimes.gtfs.zone
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /var/cache/nginx
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crimes
+  namespace: sites
+spec:
+  selector:
+    app: crimes
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+# The route lives in `gtfs`, not `sites`: Traefik resolves `tls.secretName` in
+# the IngressRoute's own namespace, and the cert-manager Secrets are there.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: crimes
+  namespace: gtfs
+  annotations:
+    external-dns.alpha.kubernetes.io/target: "73.4.232.254"
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`crimes.gtfs.zone`)
+      kind: Rule
+      services:
+        - name: crimes
+          namespace: sites
+          port: 80
+  tls:
+    secretName: gtfs-zone-tls

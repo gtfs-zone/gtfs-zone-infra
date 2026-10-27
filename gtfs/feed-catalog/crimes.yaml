@@ -1,0 +1,132 @@
+# ── crimes (Dagster code location) ────────────────────────────────────────────
+# Judges every feed in the catalog and publishes crimes.json for
+# crimes.gtfs.zone. A third code location in feed-catalog's Dagster instance:
+# runs share its run storage and single-run queue, so the daily schedule
+# (14:00 UTC) sits after the catalog (09:00) and timetable-sites (11:00).
+#
+# With DefaultRunLauncher a run executes inside this pod. It judges up to
+# CRIMES_WORKERS zips at once, each in a process killed past
+# CRIMES_WORKER_MEMORY resident bytes, so the memory limit covers the workers
+# plus the code server. Downloads and extracted tables go to the work volume:
+# one zip and its largest table per worker (Entur is 535 MB zipped, 800 MB of
+# stop_times).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crimes-code
+  namespace: gtfs
+  labels:
+    app: crimes-code
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crimes-code
+  template:
+    metadata:
+      labels:
+        app: crimes-code
+    spec:
+      containers:
+        - name: crimes
+          image: ghcr.io/gtfs-zone/gtfs-zone-crimes
+          command:
+            - dagster
+            - api
+            - grpc
+            - -h
+            - 0.0.0.0
+            - -p
+            - "4000"
+            - -m
+            - gtfs_zone_crimes.pipeline.definitions
+          ports:
+            - name: grpc
+              containerPort: 4000
+          env:
+            - name: DAGSTER_HOME
+              value: /app/dagster_home
+            - name: POSTGRES_FEED_CATALOG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-feed-catalog
+                  key: password
+            - name: DATABASE_URL
+              value: postgresql://feed_catalog:$(POSTGRES_FEED_CATALOG_PASSWORD)@postgres-rw:5432/feed_catalog
+            # The crimes bucket, with a key scoped to it alone.
+            - name: S3_ENDPOINT
+              value: http://garage:3900
+            - name: S3_BUCKET
+              value: crimes.gtfs.zone
+            - name: S3_REGION
+              value: garage
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: CRIMES_S3_ACCESS_KEY
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: CRIMES_S3_SECRET_KEY
+            - name: CRIMES_WORKERS
+              value: "2"
+            - name: CRIMES_WORKER_MEMORY
+              value: "5000000000"
+            - name: CRIMES_WORKDIR
+              value: /work
+            # Threads per judging process, so two workers share the cores.
+            - name: POLARS_MAX_THREADS
+              value: "2"
+            # Heartbeat pushed after every publish.
+            - name: GATUS_URL
+              value: http://gatus:8080
+            - name: GATUS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: GATUS_CRIMES_TOKEN
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              memory: 11Gi
+          volumeMounts:
+            - name: dagster-config
+              mountPath: /app/dagster_home/dagster.yaml
+              subPath: dagster.yaml
+              readOnly: true
+            - name: work
+              mountPath: /work
+          readinessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: dagster-config
+          configMap:
+            name: feed-catalog-dagster
+        - name: work
+          emptyDir:
+            sizeLimit: 6Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: crimes-code
+  namespace: gtfs
+spec:
+  selector:
+    app: crimes-code
+  ports:
+    - name: grpc
+      port: 4000
+      targetPort: grpc
