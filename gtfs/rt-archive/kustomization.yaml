@@ -1,0 +1,13 @@
+# rt-archive component: the recorder Deployment, its PVC and the feeds.yaml
+# ConfigMap. The generator hash-suffixes the ConfigMap, so editing feeds.yaml
+# rolls the recorder and the rt-archive Dagster code server
+# (gtfs/feed-catalog/rt-archive.yaml) together.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: gtfs
+resources:
+  - recorder.yaml
+configMapGenerator:
+  - name: rt-archive-feeds
+    files:
+      - feeds.yaml

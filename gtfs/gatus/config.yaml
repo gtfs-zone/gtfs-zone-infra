@@ -331,6 +331,20 @@ external-endpoints:
       - type: telegram
         failure-threshold: 1
 
+  # rt-archive's TIDES build POSTs success to
+  # /api/v1/endpoints/data_archive-publish/external after a run that published
+  # every enabled feed's day; the schedule runs at 16:00 UTC. Disabled while
+  # the code server is scaled to 0.
+  - name: Archive publish
+    group: Data
+    enabled: false
+    token: "${GATUS_RT_ARCHIVE_TOKEN}"
+    heartbeat:
+      interval: 30h
+    alerts:
+      - type: telegram
+        failure-threshold: 1
+
   # Each rt-poller POSTs to /api/v1/endpoints/pollers_<name>/external every
   # cycle, throttled to one push per minute while unchanged: success when its
   # upstream answered (empty is fine), failure when it could not be read.
@@ -357,6 +371,19 @@ external-endpoints:
   - name: Hudson Link poller
     group: Pollers
     token: "${GATUS_POLLERS_TOKEN}"
+    heartbeat:
+      interval: 5m
+    alerts:
+      - type: telegram
+        failure-threshold: 5
+
+  # The rt-archive recorder POSTs to /api/v1/endpoints/pollers_archive-recorder/external
+  # once a minute: success when every enabled feed had a 200 on TU and VP in
+  # the last 2 min. Disabled while the recorder is scaled to 0.
+  - name: Archive recorder
+    group: Pollers
+    enabled: false
+    token: "${GATUS_RT_ARCHIVE_TOKEN}"
     heartbeat:
       interval: 5m
     alerts:

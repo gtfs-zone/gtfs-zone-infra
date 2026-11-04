@@ -74,6 +74,8 @@ data:
     data.gtfs.zone  feed-catalog    FEED_CATALOG_S3_ACCESS_KEY    FEED_CATALOG_S3_SECRET_KEY    yes yes
     sites.gtfs.zone timetable-sites TIMETABLE_SITES_S3_ACCESS_KEY TIMETABLE_SITES_S3_SECRET_KEY yes no
     crimes.gtfs.zone crimes CRIMES_S3_ACCESS_KEY CRIMES_S3_SECRET_KEY yes no
+    rt-archive rt-archive RT_ARCHIVE_S3_ACCESS_KEY RT_ARCHIVE_S3_SECRET_KEY no no
+    archive.rt.gtfs.zone rt-archive-tides RT_ARCHIVE_TIDES_S3_ACCESS_KEY RT_ARCHIVE_TIDES_S3_SECRET_KEY yes no
     "
 
     api() {
@@ -269,7 +271,9 @@ spec:
         storageClassName: longhorn
         resources:
           requests:
-            storage: 2Gi
+            # Grown from 2Gi by patching the live PVC: volumeClaimTemplates are
+            # immutable, so the StatefulSet was orphan-deleted and recreated.
+            storage: 10Gi
     - metadata:
         name: data
       spec:
@@ -354,6 +358,28 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: CRIMES_S3_SECRET_KEY
+            # rt-archive recorder's pair, scoped to the private rt-archive bucket.
+            - name: RT_ARCHIVE_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_S3_ACCESS_KEY
+            - name: RT_ARCHIVE_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_S3_SECRET_KEY
+            # rt-archive TIDES build's pair, scoped to the archive.rt.gtfs.zone bucket.
+            - name: RT_ARCHIVE_TIDES_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_TIDES_S3_ACCESS_KEY
+            - name: RT_ARCHIVE_TIDES_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_TIDES_S3_SECRET_KEY
           volumeMounts:
             - name: config
               mountPath: /etc/garage

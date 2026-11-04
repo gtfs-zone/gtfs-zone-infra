@@ -1,0 +1,146 @@
+# ── rt-archive (Dagster code location) ────────────────────────────────────────
+# Builds one TIDES data package per feed and service day from the raw
+# recordings in rt-archive and publishes it to archive.rt.gtfs.zone. A fourth
+# code location in feed-catalog's Dagster instance: runs share its run storage
+# and single-run queue, so the daily schedule (16:00 UTC) sits after the
+# catalog (09:00), timetable-sites (11:00) and crimes (14:00).
+#
+# Same image as the recorder. Partitions are read from the feeds.yaml
+# ConfigMap generated in gtfs/rt-archive/, so a feed edit rolls this pod too.
+# Scaled to 0, and absent from workspace.yaml, until the image is published.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rt-archive-code
+  namespace: gtfs
+  labels:
+    app: rt-archive-code
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: rt-archive-code
+  template:
+    metadata:
+      labels:
+        app: rt-archive-code
+    spec:
+      containers:
+        - name: rt-archive
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-archive
+          command:
+            - dagster
+            - api
+            - grpc
+            - -h
+            - 0.0.0.0
+            - -p
+            - "4000"
+            - -m
+            - gtfs_zone_rt_archive.pipeline.definitions
+          ports:
+            - name: grpc
+              containerPort: 4000
+          env:
+            - name: DAGSTER_HOME
+              value: /app/dagster_home
+            - name: POSTGRES_FEED_CATALOG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-feed-catalog
+                  key: password
+            - name: DATABASE_URL
+              value: postgresql://feed_catalog:$(POSTGRES_FEED_CATALOG_PASSWORD)@postgres-rw:5432/feed_catalog
+            - name: RT_ARCHIVE_FEEDS
+              value: /config/feeds.yaml
+            - name: S3_ENDPOINT
+              value: http://garage:3900
+            - name: S3_REGION
+              value: garage
+            # Raw recordings, read-only use of the recorder's bucket and key.
+            - name: RAW_S3_BUCKET
+              value: rt-archive
+            - name: RAW_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_S3_ACCESS_KEY
+            - name: RAW_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_S3_SECRET_KEY
+            # Published packages, with a key scoped to archive.rt.gtfs.zone.
+            - name: TIDES_S3_BUCKET
+              value: archive.rt.gtfs.zone
+            - name: TIDES_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_TIDES_S3_ACCESS_KEY
+            - name: TIDES_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_TIDES_S3_SECRET_KEY
+            - name: RT_ARCHIVE_WORKDIR
+              value: /work
+            # Heartbeat pushed after a run that published every enabled feed.
+            - name: GATUS_URL
+              value: http://gatus:8080
+            - name: GATUS_ENDPOINT_KEY
+              value: data_archive-publish
+            - name: GATUS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: GATUS_RT_ARCHIVE_TOKEN
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 4Gi
+          volumeMounts:
+            - name: dagster-config
+              mountPath: /app/dagster_home/dagster.yaml
+              subPath: dagster.yaml
+              readOnly: true
+            - name: feeds
+              mountPath: /config
+              readOnly: true
+            - name: work
+              mountPath: /work
+          readinessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: grpc
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: dagster-config
+          configMap:
+            name: feed-catalog-dagster
+        - name: feeds
+          configMap:
+            name: rt-archive-feeds
+        - name: work
+          emptyDir:
+            sizeLimit: 4Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rt-archive-code
+  namespace: gtfs
+spec:
+  selector:
+    app: rt-archive-code
+  ports:
+    - name: grpc
+      port: 4000
+      targetPort: grpc

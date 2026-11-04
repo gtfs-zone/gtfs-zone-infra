@@ -71,6 +71,12 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: GATUS_CRIMES_TOKEN
+            # Bearer token rt-archive pushes its recorder and publish heartbeats with.
+            - name: GATUS_RT_ARCHIVE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: GATUS_RT_ARCHIVE_TOKEN
             # Bearer token the rt-pollers push their upstream heartbeats with.
             - name: GATUS_POLLERS_TOKEN
               valueFrom:

@@ -1,8 +1,8 @@
 # feed-catalog component: the three Dagster Deployments, their two Services,
-# timetable-sites' and crimes' code servers as further code locations, and the instance-config
-# ConfigMap. Its own directory because the generator
-# hash-suffixes that ConfigMap, so editing dagster.yaml or workspace.yaml rolls
-# the pods - the gtfs/gatus/ pattern.
+# timetable-sites', crimes' and rt-archive's code servers as further code
+# locations, and the instance-config ConfigMap. Its own directory because the
+# generator hash-suffixes that ConfigMap, so editing dagster.yaml or
+# workspace.yaml rolls the pods - the gtfs/gatus/ pattern.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: gtfs
@@ -10,6 +10,7 @@ resources:
   - feed-catalog.yaml
   - timetable-sites.yaml
   - crimes.yaml
+  - rt-archive.yaml
 configMapGenerator:
   - name: feed-catalog-dagster
     files:

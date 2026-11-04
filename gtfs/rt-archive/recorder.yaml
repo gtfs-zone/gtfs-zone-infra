@@ -1,0 +1,102 @@
+# ── rt-archive recorder ───────────────────────────────────────────────────────
+# Polls every enabled feed in feeds.yaml, one thread per feed, and writes raw
+# hourly jsonl.zst files to the private rt-archive bucket. The open hour is
+# kept on the PVC, so a restart resumes it; on start the recorder compresses
+# and uploads any leftover hours.
+#
+# Recreate, not RollingUpdate: two pods on one RWO volume would both write the
+# open hour. Scaled to 0 until the image is published.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rt-archive-recorder
+  namespace: gtfs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rt-archive-recorder
+  namespace: gtfs
+  labels:
+    app: rt-archive-recorder
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: rt-archive-recorder
+  template:
+    metadata:
+      labels:
+        app: rt-archive-recorder
+    spec:
+      # Fixed ids so the Longhorn volume is writable whatever user the image
+      # declares: fsGroup makes kubelet chgrp the volume on mount.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: recorder
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-archive
+          command: ["gtfs-zone-rt-archive", "record"]
+          env:
+            - name: RT_ARCHIVE_FEEDS
+              value: /config/feeds.yaml
+            - name: RT_ARCHIVE_DATA_DIR
+              value: /data
+            # The rt-archive bucket, with a key scoped to it alone.
+            - name: S3_ENDPOINT
+              value: http://garage:3900
+            - name: S3_BUCKET
+              value: rt-archive
+            - name: S3_REGION
+              value: garage
+            - name: S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_S3_ACCESS_KEY
+            - name: S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: RT_ARCHIVE_S3_SECRET_KEY
+            # Heartbeat pushed once a minute (Pollers group in gatus/config.yaml).
+            - name: GATUS_URL
+              value: http://gatus:8080
+            - name: GATUS_ENDPOINT_KEY
+              value: pollers_archive-recorder
+            - name: GATUS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: GATUS_RT_ARCHIVE_TOKEN
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: feeds
+              mountPath: /config
+              readOnly: true
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: feeds
+          configMap:
+            name: rt-archive-feeds
+        - name: data
+          persistentVolumeClaim:
+            claimName: rt-archive-recorder

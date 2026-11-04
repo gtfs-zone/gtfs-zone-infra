@@ -27,6 +27,7 @@ resources:
 - rt-traccar-receiver.yaml
 - rt-delay-estimator.yaml
 - rt-pollers.yaml
+- rt-archive
 - feed-catalog
 - feed-catalog-migrate.yaml
 - ingressroutes.yaml

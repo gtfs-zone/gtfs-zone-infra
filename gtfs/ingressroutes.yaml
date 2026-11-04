@@ -277,6 +277,32 @@ spec:
   tls:
     secretName: gtfs-zone-tls
 ---
+# rt-archive's TIDES packages and index.json, from the archive.rt.gtfs.zone
+# bucket over s3_web. CSVs are stored gzipped with their own Content-Encoding,
+# which Traefik's compress leaves alone; the JSON files are compressed on the
+# way out. data-cors for the same reason as data.gtfs.zone: the accuracy
+# frontend fetches these cross-origin.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: rt-archive
+  namespace: gtfs
+  annotations:
+    external-dns.alpha.kubernetes.io/target: "73.4.232.254"
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`archive.rt.gtfs.zone`)
+      kind: Rule
+      middlewares:
+        - name: data-cors
+        - name: compress
+      services:
+        - name: garage
+          port: 3902
+  tls:
+    secretName: gtfs-zone-tls
+---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
