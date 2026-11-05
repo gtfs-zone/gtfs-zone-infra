@@ -15,3 +15,7 @@ load_from:
       host: crimes-code
       port: 4000
       location_name: crimes
+  - grpc_server:
+      host: rt-archive-code
+      port: 4000
+      location_name: rt_archive

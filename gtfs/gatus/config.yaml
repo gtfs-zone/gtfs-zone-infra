@@ -332,12 +332,10 @@ external-endpoints:
         failure-threshold: 1
 
   # rt-archive's TIDES build POSTs success to
-  # /api/v1/endpoints/data_archive-publish/external after a run that published
-  # every enabled feed's day; the schedule runs at 16:00 UTC. Disabled while
-  # the code server is scaled to 0.
+  # /api/v1/endpoints/data_archive-publish/external after a run once every
+  # enabled feed's scheduled day has been built; the schedule runs at 16:00 UTC.
   - name: Archive publish
     group: Data
-    enabled: false
     token: "${GATUS_RT_ARCHIVE_TOKEN}"
     heartbeat:
       interval: 30h

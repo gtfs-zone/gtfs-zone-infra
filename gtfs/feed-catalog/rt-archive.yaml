@@ -7,7 +7,6 @@
 #
 # Same image as the recorder. Partitions are read from the feeds.yaml
 # ConfigMap generated in gtfs/rt-archive/, so a feed edit rolls this pod too.
-# Scaled to 0, and absent from workspace.yaml, until the image is published.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,7 +15,7 @@ metadata:
   labels:
     app: rt-archive-code
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: rt-archive-code
@@ -83,9 +82,7 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: RT_ARCHIVE_TIDES_S3_SECRET_KEY
-            - name: RT_ARCHIVE_WORKDIR
-              value: /work
-            # Heartbeat pushed after a run that published every enabled feed.
+            # Heartbeat pushed once every enabled feed's scheduled day is built.
             - name: GATUS_URL
               value: http://gatus:8080
             - name: GATUS_ENDPOINT_KEY
@@ -109,8 +106,6 @@ spec:
             - name: feeds
               mountPath: /config
               readOnly: true
-            - name: work
-              mountPath: /work
           readinessProbe:
             tcpSocket:
               port: grpc
@@ -128,9 +123,6 @@ spec:
         - name: feeds
           configMap:
             name: rt-archive-feeds
-        - name: work
-          emptyDir:
-            sizeLimit: 4Gi
 ---
 apiVersion: v1
 kind: Service
