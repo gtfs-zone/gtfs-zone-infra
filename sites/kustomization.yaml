@@ -20,7 +20,7 @@ resources:
 - feed-list.yaml
 - crimes.yaml
 images:
-- digest: sha256:0e6ae3536a04b68e7aa11af99ac4843294e3328ff07ec6a2b72efda7b9a92b23
+- digest: sha256:f408c142a6d99f9945d4797c5f789484d67706feede5d877397202c2ef2c49b4
   name: ghcr.io/gtfs-zone/gtfs-zone-crimes-web
   newName: ghcr.io/gtfs-zone/gtfs-zone-crimes-web
 - digest: sha256:a4e54b02f02030b29663e22d3b9a9f129892d981fc07eccdaba4fdaad8506fb5
