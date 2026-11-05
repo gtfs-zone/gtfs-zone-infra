@@ -114,6 +114,17 @@ endpoints:
     alerts:
       - type: telegram
 
+  - name: accuracy.rt.gtfs.zone
+    group: Sites
+    url: https://accuracy.rt.gtfs.zone/
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      # Wildcards match one label, so this host rides the *.rt.gtfs.zone SAN.
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: telegram
+
   - name: list.gtfs.zone
     group: Sites
     url: https://list.gtfs.zone/
@@ -417,6 +428,12 @@ external-endpoints:
       interval: 30h
 
   - name: gtfs-zone-homepage
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-rt-accuracy
     group: Vulnerabilities
     token: "${GATUS_VULN_SCAN_TOKEN}"
     heartbeat:
