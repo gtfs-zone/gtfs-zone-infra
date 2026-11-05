@@ -379,10 +379,10 @@ external-endpoints:
 
   # The rt-archive recorder POSTs to /api/v1/endpoints/pollers_archive-recorder/external
   # once a minute: success when every enabled feed had a 200 on TU and VP in
-  # the last 2 min. Disabled while the recorder is scaled to 0.
+  # the last 2 min.
   - name: Archive recorder
     group: Pollers
-    enabled: false
+    enabled: true
     token: "${GATUS_RT_ARCHIVE_TOKEN}"
     heartbeat:
       interval: 5m

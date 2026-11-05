@@ -5,7 +5,7 @@
 # and uploads any leftover hours.
 #
 # Recreate, not RollingUpdate: two pods on one RWO volume would both write the
-# open hour. Scaled to 0 until the image is published.
+# open hour.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -27,7 +27,7 @@ metadata:
   labels:
     app: rt-archive-recorder
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
