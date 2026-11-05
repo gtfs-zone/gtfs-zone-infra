@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: gtfs-api
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-api:v0.2.0
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-api:v0.3.0
           command: ["fastapi", "run", "src/gtfs_zone_rt_api/main.py", "--port", "8000"]
           ports:
             - name: http
@@ -143,7 +143,7 @@ spec:
     spec:
       containers:
         - name: gtfs-manager
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-api:v0.2.0
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-api:v0.3.0
           command:
             - fastapi
             - run

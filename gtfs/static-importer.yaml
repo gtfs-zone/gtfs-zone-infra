@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: static-importer-worker
-          image: ghcr.io/gtfs-zone/gtfs-zone-static-importer:v0.2.0
+          image: ghcr.io/gtfs-zone/gtfs-zone-static-importer:v0.2.3
           command: ["celery", "-A", "gtfs_zone_static_importer.celery_app", "worker", "-l", "info"]
           env:
             - name: CELERY_BROKER_URL
@@ -86,7 +86,7 @@ spec:
     spec:
       containers:
         - name: static-importer-beat
-          image: ghcr.io/gtfs-zone/gtfs-zone-static-importer:v0.2.0
+          image: ghcr.io/gtfs-zone/gtfs-zone-static-importer:v0.2.3
           # --schedule is not optional: beat writes its shelve DB to the CWD by
           # default, but /app is root-owned and the image runs as `bridge`.
           # /app/beat is the writable directory the image creates for this.
