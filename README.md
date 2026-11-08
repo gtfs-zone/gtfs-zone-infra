@@ -658,7 +658,8 @@ Populate at minimum:
   Keycloak bootstrap admin password, OAuth connector credentials,
   `INGEST_API_TOKEN`, the `TRACCAR_ADMIN_*` pair, the Garage secrets and both
   buckets' key pairs (`S3_*`, `FEED_CATALOG_S3_*`), feed-catalog's
-  `MOBILITY_DB_REFRESH_TOKEN`, and the Gatus Telegram and heartbeat tokens.
+  `MOBILITY_DB_REFRESH_TOKEN`, the Gatus Telegram and heartbeat tokens, and
+  `HEALTHCHECKS_PING_URL` for the node heartbeat.
 - `gtfs/secrets/postgres-*.enc.yaml`: CNPG role passwords.
 
 ## Step 4: Bootstrap

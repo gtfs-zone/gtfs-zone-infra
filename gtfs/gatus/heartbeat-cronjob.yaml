@@ -1,0 +1,52 @@
+# Dead-man's switch for the whole node. Every minute, fetches Gatus's /health by
+# its public URL (DNS, edge, cert, Gatus) and on success pings healthchecks.io.
+# When pings stop, healthchecks.io posts to Telegram through its webhook
+# integration, so an outage of the node, its power or its uplink still alerts.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gatus-heartbeat
+  namespace: gtfs
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 50
+      ttlSecondsAfterFinished: 300
+      template:
+        metadata:
+          labels:
+            app: gatus-heartbeat
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+          containers:
+            - name: ping
+              image: curlimages/curl:8.22.0
+              command:
+                - sh
+                - -c
+                - |
+                  curl -fsS -m 10 -o /dev/null https://status.gtfs.zone/health \
+                    && exec curl -fsS -m 10 --retry 3 -o /dev/null "$HEALTHCHECKS_PING_URL"
+                  curl -fsS -m 10 --retry 3 -o /dev/null "$HEALTHCHECKS_PING_URL/fail"
+                  exit 1
+              env:
+                - name: HEALTHCHECKS_PING_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: gtfs-app-secrets
+                      key: HEALTHCHECKS_PING_URL
+              resources:
+                requests:
+                  cpu: 5m
+                  memory: 8Mi
+                limits:
+                  memory: 32Mi

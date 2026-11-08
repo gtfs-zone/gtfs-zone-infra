@@ -1,4 +1,5 @@
-# Gatus component: Deployment + Service + its config ConfigMap. The generator
+# Gatus component: Deployment + Service + its config ConfigMap, plus the
+# healthchecks.io heartbeat CronJob. The generator
 # hash-suffixes the ConfigMap, so editing config.yaml rolls the Deployment
 # instead of waiting on Gatus's own file watcher.
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -6,6 +7,7 @@ kind: Kustomization
 namespace: gtfs
 resources:
   - gatus.yaml
+  - heartbeat-cronjob.yaml
 configMapGenerator:
   - name: gatus-config
     files:

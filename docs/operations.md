@@ -114,6 +114,15 @@ checked by their real URL, not Service DNS, so a check exercises DNS, the edge
 passthrough and the cert; hairpin NAT back to `73.4.232.254` works from inside
 the cluster.
 
+**Whole-node outages** are caught outside the cluster, since Gatus dies with
+the node. The `gatus-heartbeat` CronJob (`gtfs/gatus/heartbeat-cronjob.yaml`)
+fetches `https://status.gtfs.zone/health` every minute and on success pings
+healthchecks.io (`HEALTHCHECKS_PING_URL` in `gtfs-app-secrets`); on failure it
+pings `/fail`. The check (period 1 min, grace 3 min) and its webhook to the
+Telegram Bot API, which posts as `@kcfam_bot` to the same chat, are configured
+in the healthchecks.io UI, not in this repo. A down message means the node,
+its power or uplink, the edge, or Gatus itself is down.
+
 **Database migrations** run as an ArgoCD **PreSync hook Job**
 (`gtfs/rt-api-migrate.yaml`) using the `gtfs-zone-db-models` migrations, so Alembic
 completes before any rollout. If a hook Job wedges, ArgoCD's `hook-finalizer`
