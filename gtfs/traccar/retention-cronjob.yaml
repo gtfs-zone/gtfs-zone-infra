@@ -29,13 +29,12 @@ spec:
           containers:
             - name: retention
               image: ghcr.io/cloudnative-pg/postgresql:18.3
-              command:
-                - psql
-                - --set=ON_ERROR_STOP=1
-                - -v
-                - days=30
-                - -f
-                - /sql/retention.sql
+              # Waits up to 10 min for Postgres, e.g. a catch-up run right after a reboot.
+              command: ["/bin/sh", "-ec"]
+              args:
+                - |
+                  for i in $(seq 120); do pg_isready -q && break; sleep 5; done
+                  exec psql --set=ON_ERROR_STOP=1 -v days=30 -f /sql/retention.sql
               env:
                 - name: PGHOST
                   value: postgres-rw
