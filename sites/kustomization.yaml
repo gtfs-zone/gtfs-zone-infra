@@ -26,6 +26,6 @@ images:
 - digest: sha256:69b89c81b33d3eba9dc995a35ad62e09915fd5dd2e030c4197a63edb23b191ff
   name: ghcr.io/gtfs-zone/gtfs-zone-feed-list
   newName: ghcr.io/gtfs-zone/gtfs-zone-feed-list
-- digest: sha256:d88c7c83415bbe29a1bad72ed0c78ea5e1399448f4057cc944a63b0b0477ec2d
+- digest: sha256:06edfbfcf375b18a363c2cc17cf6f58464fd91210037871a27e246e0b0c596b6
   name: ghcr.io/gtfs-zone/gtfs-zone-rt-manager
   newName: ghcr.io/gtfs-zone/gtfs-zone-rt-manager
