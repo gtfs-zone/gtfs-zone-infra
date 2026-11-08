@@ -4,7 +4,7 @@
 # cert-manager wildcard Secret `gtfs-zone-tls`.
 #
 # Every route carries `external-dns.alpha.kubernetes.io/target: <server_ip>` so
-# external-dns creates the matching Porkbun record; this is what retired dns.tf.
+# external-dns creates the matching Cloudflare record.
 #
 # Auth: the two oauth2 Middlewares (oauth2-proxy.yaml) replace the TF ForwardAuth
 # labels. Public by design: rt (the GTFS-RT feed), status (the Gatus status page),
