@@ -6,7 +6,7 @@
 ## doing the syncing. Only these two ingress objects are GitOps-managed.
 ##
 ## Wave 3: after infra-cert-manager-config (wave 2) has created the
-## `letsencrypt-porkbun` ClusterIssuer this Certificate references, and after
+## `letsencrypt` ClusterIssuer this Certificate references, and after
 ## infra-traefik (wave 1) has installed the IngressRoute CRD.
 apiVersion: argoproj.io/v1alpha1
 kind: Application

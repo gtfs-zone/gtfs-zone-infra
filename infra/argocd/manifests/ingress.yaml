@@ -18,13 +18,13 @@ spec:
   dnsNames:
     - "argocd.gtfs.zone"
   issuerRef:
-    name: letsencrypt-porkbun
+    name: letsencrypt
     kind: ClusterIssuer
 ---
 ## Mirrors the seven routes in gtfs/ingressroutes.yaml: `websecure` entrypoint
 ## (host :8443 via ServiceLB, reached through home-docker Traefik's SNI
 ## passthrough for *.gtfs.zone), and the external-dns target annotation that
-## creates the Porkbun record.
+## creates the Cloudflare record.
 ##
 ## Backend port 80 (not 443): `server.insecure: true` in infra/argocd/values.yaml
 ## makes argocd-server serve plain HTTP, so TLS terminates here at Traefik.
