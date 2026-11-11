@@ -60,25 +60,24 @@ spec:
                   key: password
             - name: DATABASE_URL
               value: postgresql://feed_catalog:$(POSTGRES_FEED_CATALOG_PASSWORD)@postgres-rw:5432/feed_catalog
-            # The public artifact bucket, not gtfs-feeds. S3_REGION is part of
-            # the SigV4 signature, so a mismatch with garage.toml's s3_region
-            # is a 403, not a redirect.
+            # The public artifact bucket, in R2 behind data.gtfs.zone, with a
+            # token scoped to that bucket.
             - name: S3_ENDPOINT
-              value: http://garage:3900
+              value: https://58bb5ad547881e71cebb0516eaa25de8.r2.cloudflarestorage.com
             - name: S3_BUCKET
-              value: data.gtfs.zone
+              value: gtfs-zone-data
             - name: S3_REGION
-              value: garage
+              value: auto
             - name: S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: gtfs-app-secrets
-                  key: FEED_CATALOG_S3_ACCESS_KEY
+                  key: FEED_CATALOG_R2_ACCESS_KEY
             - name: S3_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: gtfs-app-secrets
-                  key: FEED_CATALOG_S3_SECRET_KEY
+                  key: FEED_CATALOG_R2_SECRET_KEY
             # A refresh token, exchanged for a short-lived access token at the
             # start of each run. Empty is not an error: the run then covers
             # Transitland and the curated set alone.
