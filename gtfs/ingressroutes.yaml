@@ -238,8 +238,6 @@ kind: IngressRoute
 metadata:
   name: data
   namespace: gtfs
-  annotations:
-    external-dns.alpha.kubernetes.io/target: "73.4.232.254"
 spec:
   entryPoints: [websecure]
   routes:
