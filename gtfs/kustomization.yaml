@@ -37,7 +37,7 @@ images:
 - digest: sha256:aed7bfe41154e6e0d28beef4bb48c1038516cd30f2db1838c75fd97e575206a4
   name: ghcr.io/gtfs-zone/gtfs-zone-crimes
   newName: ghcr.io/gtfs-zone/gtfs-zone-crimes
-- digest: sha256:2b1b043cf8b35adef477ed8df9c29723caf4d682fcc966fd82bb681de38da71a
+- digest: sha256:03b744df5abdb6145019c74a6212578d351e71e32f878e847ef4ff90240bbbb9
   name: ghcr.io/gtfs-zone/gtfs-zone-feed-catalog
   newName: ghcr.io/gtfs-zone/gtfs-zone-feed-catalog
 - digest: sha256:56f8725e1c8013d10b7c5c2c45084129590490aa5d06d76e0135009e941bf3f8
