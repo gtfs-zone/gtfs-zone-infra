@@ -1,6 +1,6 @@
 # ── rt-archive (Dagster code location) ────────────────────────────────────────
 # Builds one TIDES data package per feed and service day from the raw
-# recordings in rt-archive and publishes it to archive.rt.gtfs.zone. A fourth
+# recordings in rt-archive and publishes it to rt-archive.gtfs.zone (R2). A fourth
 # code location in feed-catalog's Dagster instance: runs share its run storage
 # and single-run queue, so the daily schedule (16:00 UTC) sits after the
 # catalog (09:00), timetable-sites (11:00) and crimes (14:00).
@@ -69,19 +69,24 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: RT_ARCHIVE_S3_SECRET_KEY
-            # Published packages, with a key scoped to archive.rt.gtfs.zone.
+            # Published packages, in the R2 bucket behind rt-archive.gtfs.zone,
+            # with a token scoped to that bucket.
+            - name: TIDES_S3_ENDPOINT
+              value: https://58bb5ad547881e71cebb0516eaa25de8.r2.cloudflarestorage.com
+            - name: TIDES_S3_REGION
+              value: auto
             - name: TIDES_S3_BUCKET
-              value: archive.rt.gtfs.zone
+              value: gtfs-zone-rt-archive
             - name: TIDES_S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: gtfs-app-secrets
-                  key: RT_ARCHIVE_TIDES_S3_ACCESS_KEY
+                  key: RT_ARCHIVE_TIDES_R2_ACCESS_KEY
             - name: TIDES_S3_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: gtfs-app-secrets
-                  key: RT_ARCHIVE_TIDES_S3_SECRET_KEY
+                  key: RT_ARCHIVE_TIDES_R2_SECRET_KEY
             # Heartbeat pushed once every enabled feed's scheduled day is built.
             - name: GATUS_URL
               value: http://gatus:8080
