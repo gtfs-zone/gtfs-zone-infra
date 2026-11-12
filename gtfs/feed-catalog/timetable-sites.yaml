@@ -52,23 +52,24 @@ spec:
                   key: password
             - name: DATABASE_URL
               value: postgresql://feed_catalog:$(POSTGRES_FEED_CATALOG_PASSWORD)@postgres-rw:5432/feed_catalog
-            # The public sites bucket, with a key scoped to it alone.
+            # The public sites bucket, in R2 behind sites.gtfs.zone, with a
+            # token scoped to that bucket.
             - name: S3_ENDPOINT
-              value: http://garage:3900
+              value: https://58bb5ad547881e71cebb0516eaa25de8.r2.cloudflarestorage.com
             - name: S3_BUCKET
-              value: sites.gtfs.zone
+              value: gtfs-zone-sites
             - name: S3_REGION
-              value: garage
+              value: auto
             - name: S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: gtfs-app-secrets
-                  key: TIMETABLE_SITES_S3_ACCESS_KEY
+                  key: TIMETABLE_SITES_R2_ACCESS_KEY
             - name: S3_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: gtfs-app-secrets
-                  key: TIMETABLE_SITES_S3_SECRET_KEY
+                  key: TIMETABLE_SITES_R2_SECRET_KEY
             - name: TIMETABLE_SITES_WORKERS
               value: "4"
             - name: TIMETABLE_SITES_WORKER_MEMORY
