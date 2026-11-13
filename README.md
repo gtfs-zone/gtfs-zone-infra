@@ -86,7 +86,7 @@ flowchart LR
 | `traccar.<domain>` | Traccar console; `/osmand` takes phone position reports |
 | `status.<domain>` | Public status page (Gatus) |
 | `argocd.<domain>` | ArgoCD UI |
-| `data.<domain>` | Public source-catalog artifacts (`feeds.json`, `sources.json`, ...) from Garage's public bucket |
+| `data.<domain>` | Public source-catalog artifacts (`feeds.json`, `sources.json`, ...) from a Cloudflare R2 bucket |
 | `dagster.<domain>` | Dagster UI for feed-catalog (gated on the `gtfs-admins` group) |
 | `list.<domain>` | Source catalog list and world map (feed-list) |
 | `edit.<domain>` | GTFS editor (gtfs-zone-editor) |
@@ -172,7 +172,7 @@ flowchart LR
 
     traccar_app["Traccar Client<br>Free & open source GPS tracker app"]
     oauth["OAuth Provider<br>GitHub / GitLab / Google"]
-    porkbun["Porkbun DNS<br>DNS-01 certs + external-dns records"]
+    cloudflare["Cloudflare DNS<br>DNS-01 certs + external-dns records"]
     gtfs_src["Static GTFS Source<br>Agency schedule ZIP files"]
     upstream["Upstream RT feeds<br>Amtrak · Columbia County"]
 
@@ -182,7 +182,7 @@ flowchart LR
     traccar_app -->|"HTTPS /osmand"| stack
     operator -->|"admin UI"| stack
     stack -->|"GTFS-RT protobuf"| consumer
-    stack -->|"DNS + cert management"| porkbun
+    stack -->|"DNS + cert management"| cloudflare
     oauth -->|"OIDC tokens"| stack
     stack -->|"fetch schedule"| gtfs_src
     upstream -->|"polled by rt-pollers"| stack
@@ -353,7 +353,6 @@ stateDiagram-v2
     tc : Traccar<br>:8082 console · :5055 osmand
     gt : Gatus
     ag : ArgoCD
-    gw : Garage s3_web<br>public data.&ltdomain&gt bucket
 
     state "Auth" as auth {
         op : oauth2-proxy<br>ForwardAuth middleware
@@ -383,14 +382,12 @@ stateDiagram-v2
     tr --> tc : traccar.&ltdomain&gt (+ /osmand)
     tr --> gt : status.&ltdomain&gt (public)
     tr --> ag : argocd.&ltdomain&gt
-    tr --> gw : data.&ltdomain&gt (public)
     tr --> opa : dagster.&ltdomain&gt
 
     op --> ca : manage.rt.&ltdomain&gt (authed)
     op --> kc : OIDC token check
     opa --> gc : dagster.&ltdomain&gt (gtfs-admins)
     opa --> kc : OIDC token check
-    gc --> gw : publishes artifacts (S3 API)
 
     tc --> vp : forward.type=json
     hgb --> cp : POST /ingest/*
@@ -398,24 +395,23 @@ stateDiagram-v2
 
 ### Object storage (Garage)
 
-`gtfs/garage.yaml` runs a single-node `dxflrs/garage` StatefulSet with two
-buckets, each reached with its own access key, so a leaked pipeline credential
-reaches one bucket and not the other:
+`gtfs/garage.yaml` runs a single-node `dxflrs/garage` StatefulSet. Each bucket
+is reached with its own access key, so a leaked pipeline credential reaches one
+bucket and not the others. `gtfs-feeds` is **private**, reachable only over the
+cluster-internal S3 API. It holds the GTFS zips uploaded through
+`manage.rt.gtfs.zone`: rt-api writes and serves them, static-importer reads them
+to load the schedule.
 
-- `gtfs-feeds` is **private**, reachable only over the cluster-internal S3 API.
-  It holds the GTFS zips uploaded through `manage.rt.gtfs.zone`: rt-api writes
-  and serves them, static-importer reads them to load the schedule.
-- `data.gtfs.zone` is **public**, written by feed-catalog over the S3 API and
-  served read-only over plain HTTP by Garage's `s3_web` endpoint at
-  `data.gtfs.zone`. Garage picks the bucket from the Host header, which is why
-  the bucket's alias is literally the hostname and why the IngressRoute must not
-  rewrite the Host.
+The public static hosts (`data`, `sites` and `rt-archive.gtfs.zone`) are
+Cloudflare R2 buckets on custom domains, set up in `tofu/` (see
+[docs/operations.md](docs/operations.md#edge-config-opentofu)). Their writers
+use the same S3 API with an R2 endpoint and a token scoped to one bucket.
 
-Every writer talks the S3 API rather than Garage's own, so swapping in AWS, R2
-or B2 later is a matter of changing `S3_ENDPOINT`. A `garage-init` Job (an
-ArgoCD `PostSync` hook) applies the single-node layout, creates both buckets,
-imports their keys and enables website access on the public one; Garage
-refuses every S3 call until that runs.
+Every writer talks the S3 API rather than Garage's own, so moving a bucket is a
+matter of changing `S3_ENDPOINT`. A `garage-init` Job (an ArgoCD `PostSync`
+hook) applies the single-node layout, creates the buckets, imports their keys
+and enables website access where a bucket is served over HTTP; Garage refuses
+every S3 call until that runs.
 
 ### Source catalog
 
@@ -433,7 +429,7 @@ flowchart LR
     ex["curated examples"]
     gc["feed-catalog<br>Dagster, daily"]
     pg[("Postgres<br>feed_catalog")]
-    bucket[("data.gtfs.zone<br>public bucket")]
+    bucket[("data.gtfs.zone<br>R2 bucket")]
     edit["edit / viz<br>load modal"]
     list["list.gtfs.zone"]
 
@@ -591,10 +587,10 @@ PGPASSWORD="$(kubectl -n gtfs get secret postgres-rt-api -o jsonpath='{.data.pas
 - **A server** with a public IP running [k3s](https://k3s.io/) (installed with
   `--disable traefik`; this repo brings its own via Helm) and `open-iscsi`
   enabled for Longhorn.
-- **A domain on [Porkbun](https://porkbun.com/)** with API access enabled,
-  used by both cert-manager (DNS-01) and external-dns.
+- **A domain whose DNS is hosted on [Cloudflare](https://www.cloudflare.com/)**
+  (Free plan), used by cert-manager (DNS-01), external-dns and `tofu/`.
 - **At least one OAuth provider** (GitHub, GitLab, or Google) for user login.
-- Local tooling: `kubectl`, `helm`, `kustomize`, `sops`, `age`, `ksops`.
+- Local tooling: `kubectl`, `helm`, `kustomize`, `sops`, `age`, `ksops`, `tofu`.
 
 > **Host tuning:** k3s, Longhorn and containerd share root's inotify quota. The
 > default `fs.inotify.max_user_instances=128` is not enough and fails in
@@ -603,13 +599,16 @@ PGPASSWORD="$(kubectl -n gtfs get secret postgres-rt-api -o jsonpath='{.data.pas
 
 ## Step 1: Domain and DNS API
 
-1. Buy a domain at [porkbun.com](https://porkbun.com).
-2. In your Porkbun account go to **API** → enable API access for the domain.
-3. Generate an API key pair (`pk1_...` / `sk1_...`); you'll need both.
+1. Add the domain to Cloudflare (Free) and point the registrar's nameservers
+   at the two Cloudflare assigns.
+2. Create an API token scoped to the zone with **Zone: Read** and **DNS: Edit**
+   for cert-manager and external-dns.
+3. Records with nothing in the cluster behind them (apex, `www`, MX, TXT), the
+   static-host rules and zone settings are in `tofu/`; see
+   [docs/operations.md](docs/operations.md#edge-config-opentofu).
 
-DNS records are **not** written by hand: external-dns creates them from the
-`external-dns.alpha.kubernetes.io/target` annotation on each `IngressRoute`.
-The bare apex is left alone deliberately.
+Cluster DNS records are **not** written by hand: external-dns creates them from
+the `external-dns.alpha.kubernetes.io/target` annotation on each `IngressRoute`.
 
 ## Step 2: OAuth app
 
@@ -631,7 +630,7 @@ cluster by a KSOPS plugin sidecar on the argocd-repo-server.
 ```bash
 age-keygen -o age.key                      # keep this OUT of git (it is gitignored)
 # put the public recipient in .sops.yaml, then edit secrets with:
-sops infra/secrets/porkbun-secret.enc.yaml
+sops infra/secrets/cloudflare-external-dns.enc.yaml
 sops gtfs/secrets/gtfs-app-secrets.enc.yaml
 ```
 
@@ -645,9 +644,8 @@ recreate of the Secret must keep both.
 
 Populate at minimum:
 
-- `infra/secrets/`: Porkbun API key/secret, once per consuming namespace
-  (`cert-manager` uses `PORKBUN_API_KEY`/`PORKBUN_SECRET_API_KEY`,
-  `external-dns` uses `API_KEY`/`API_SECRET`), plus `argocd-oidc.enc.yaml`
+- `infra/secrets/`: the Cloudflare API token, once per consuming namespace
+  (`cert-manager` uses `api-token`, `external-dns` uses `CF_API_TOKEN`), plus `argocd-oidc.enc.yaml`
   (`clientSecret`), which argocd-server reads for Keycloak SSO. It must equal
   `KEYCLOAK_ARGOCD_CLIENT_SECRET` in `gtfs-app-secrets`, and must exist before
   ArgoCD starts with `oidc.config` set.
@@ -656,9 +654,9 @@ Populate at minimum:
   `OAUTH2_PROXY_ADMIN_COOKIE_SECRET`), the Keycloak↔oauth2-proxy, ↔Traccar,
   ↔rt-api and ↔ArgoCD client secrets (`KEYCLOAK_*_CLIENT_SECRET`), the
   Keycloak bootstrap admin password, OAuth connector credentials,
-  `INGEST_API_TOKEN`, the `TRACCAR_ADMIN_*` pair, the Garage secrets and both
-  buckets' key pairs (`S3_*`, `FEED_CATALOG_S3_*`), feed-catalog's
-  `MOBILITY_DB_REFRESH_TOKEN`, the Gatus Telegram and heartbeat tokens, and
+  `INGEST_API_TOKEN`, the `TRACCAR_ADMIN_*` pair, the Garage secrets and its
+  buckets' key pairs (`S3_*`, `*_S3_*`), the R2 writer tokens (`*_R2_*`),
+  feed-catalog's `MOBILITY_DB_REFRESH_TOKEN`, the Gatus Telegram and heartbeat tokens, and
   `HEALTHCHECKS_PING_URL` for the node heartbeat.
 - `gtfs/secrets/postgres-*.enc.yaml`: CNPG role passwords.
 

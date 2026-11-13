@@ -4,7 +4,7 @@
 # so these records are owned and reconciled like the IngressRoute ones.
 #
 # gtfs.zone itself (gtfs-zone-homepage) is also on Pages; its A/AAAA records
-# are kept by hand in Cloudflare (see infra/external-dns/values.yaml).
+# are in tofu/dns.tf.
 apiVersion: externaldns.k8s.io/v1alpha1
 kind: DNSEndpoint
 metadata:
