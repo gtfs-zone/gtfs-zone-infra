@@ -37,11 +37,11 @@ data:
     api_bind_addr = "[::]:3900"
     root_domain = ".s3.garage.internal"
 
-    # Static web serving, which is what makes data.gtfs.zone a public HTTP
-    # endpoint rather than an S3 API only reachable with a signed request.
+    # Static web serving, which is what makes archive.rt.gtfs.zone a public
+    # HTTP endpoint rather than an S3 API only reachable with a signed request.
     # Garage picks the bucket from the Host header: a Host that does not end in
     # root_domain is looked up as a global alias, which is why the public
-    # bucket is aliased literally `data.gtfs.zone`.
+    # bucket is aliased literally `archive.rt.gtfs.zone`.
     [s3_web]
     bind_addr = "[::]:3902"
     root_domain = ".web.garage.internal"
@@ -71,8 +71,6 @@ data:
     # key without it.
     BUCKETS="
     gtfs-feeds      gtfs            S3_ACCESS_KEY                 S3_SECRET_KEY                 no  no
-    data.gtfs.zone  feed-catalog    FEED_CATALOG_S3_ACCESS_KEY    FEED_CATALOG_S3_SECRET_KEY    yes yes
-    sites.gtfs.zone timetable-sites TIMETABLE_SITES_S3_ACCESS_KEY TIMETABLE_SITES_S3_SECRET_KEY yes no
     crimes.gtfs.zone crimes CRIMES_S3_ACCESS_KEY CRIMES_S3_SECRET_KEY yes no
     rt-archive rt-archive RT_ARCHIVE_S3_ACCESS_KEY RT_ARCHIVE_S3_SECRET_KEY no no
     archive.rt.gtfs.zone rt-archive-tides RT_ARCHIVE_TIDES_S3_ACCESS_KEY RT_ARCHIVE_TIDES_S3_SECRET_KEY yes no
@@ -145,9 +143,7 @@ data:
         >/dev/null
 
       # Website access is what the s3_web endpoint serves from; without it a
-      # GET on data.gtfs.zone is a 404 that never mentions the setting. The
-      # CORS rule is set by feed-catalog, not here: it is an S3 call, and the
-      # admin API has no equivalent. That is why feed-catalog's key is owner.
+      # GET on the bucket's hostname is a 404 that never mentions the setting.
       if [ "$WEBSITE" = yes ]; then
         echo "==> enabling website access on ${BUCKET}"
         api POST "/UpdateBucket?id=${bucket_id}" -d "$(jq -nc \
@@ -324,29 +320,6 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: S3_SECRET_KEY
-            # feed-catalog's own pair, scoped to the public data.gtfs.zone
-            # bucket so the pipeline cannot reach the private gtfs-feeds.
-            - name: FEED_CATALOG_S3_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: gtfs-app-secrets
-                  key: FEED_CATALOG_S3_ACCESS_KEY
-            - name: FEED_CATALOG_S3_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: gtfs-app-secrets
-                  key: FEED_CATALOG_S3_SECRET_KEY
-            # timetable-sites' pair, scoped to the public sites.gtfs.zone bucket.
-            - name: TIMETABLE_SITES_S3_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: gtfs-app-secrets
-                  key: TIMETABLE_SITES_S3_ACCESS_KEY
-            - name: TIMETABLE_SITES_S3_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: gtfs-app-secrets
-                  key: TIMETABLE_SITES_S3_SECRET_KEY
             # crimes' pair, scoped to the crimes.gtfs.zone bucket.
             - name: CRIMES_S3_ACCESS_KEY
               valueFrom:

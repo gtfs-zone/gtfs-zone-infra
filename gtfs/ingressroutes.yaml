@@ -8,8 +8,7 @@
 #
 # Auth: the two oauth2 Middlewares (oauth2-proxy.yaml) replace the TF ForwardAuth
 # labels. Public by design: rt (the GTFS-RT feed), status (the Gatus status page),
-# id + auth (the login flow itself), data (feed-catalog's published artifacts),
-# sites (timetable-sites' timetable sites)
+# id + auth (the login flow itself), rt-archive (TIDES packages)
 # and both Traccar routes. The gated hosts (manage.rt, dagster) each also serve
 # /robots.txt unauthenticated.
 #
@@ -223,61 +222,14 @@ spec:
   tls:
     secretName: gtfs-zone-tls
 ---
-# The public artifact bucket, served by Garage's own s3_web endpoint rather than
-# the S3 API: feed-catalog's JSON is meant to be fetched by a browser with no
-# credentials. Garage picks the bucket from the Host header, matching it against
-# the bucket's global alias, which is why the bucket is aliased literally
-# `data.gtfs.zone`. Deliberately NO Host-rewrite middleware: rewriting the Host
-# is rewriting the bucket name, and the answer is a 404 that never says why.
-# Garage serves the JSON uncompressed, so Traefik compresses it on the way out.
-# data-cors sets Access-Control-Allow-Origin to a constant `*` and exposes the
-# ETag: Garage sends no `Vary: Origin`, so a reflected origin cached by one
-# gtfs.zone app would otherwise fail the CORS check in another.
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: data
-  namespace: gtfs
-spec:
-  entryPoints: [websecure]
-  routes:
-    - match: Host(`data.gtfs.zone`)
-      kind: Rule
-      middlewares:
-        - name: data-cors
-        - name: compress
-      services:
-        - name: garage
-          port: 3902
-  tls:
-    secretName: gtfs-zone-tls
----
-# timetable-sites' timetable sites, from the sites.gtfs.zone bucket over the same
-# s3_web endpoint as data.gtfs.zone. Garage stores and serves the pages
-# uncompressed, so Traefik compresses them on the way out.
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: sites
-  namespace: gtfs
-spec:
-  entryPoints: [websecure]
-  routes:
-    - match: Host(`sites.gtfs.zone`)
-      kind: Rule
-      middlewares:
-        - name: compress
-      services:
-        - name: garage
-          port: 3902
-  tls:
-    secretName: gtfs-zone-tls
----
 # rt-archive's TIDES packages and index.json, from the archive.rt.gtfs.zone
-# bucket over s3_web. CSVs are stored gzipped with their own Content-Encoding,
-# which Traefik's compress leaves alone; the JSON files are compressed on the
-# way out. data-cors for the same reason as data.gtfs.zone: the accuracy
-# frontend fetches these cross-origin.
+# bucket over Garage's s3_web endpoint. Garage picks the bucket from the Host
+# header, matching it against the bucket's global alias, so there is no
+# Host-rewrite middleware. CSVs are stored gzipped with their own
+# Content-Encoding, which Traefik's compress leaves alone; the JSON files are
+# compressed on the way out. data-cors sets Access-Control-Allow-Origin to a
+# constant `*` and exposes the ETag: Garage sends no `Vary: Origin`, and the
+# accuracy frontend fetches these cross-origin.
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
