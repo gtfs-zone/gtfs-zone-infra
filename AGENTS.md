@@ -14,6 +14,9 @@ PATH="$HOME/.local/bin:$PATH" SOPS_AGE_KEY_FILE=$PWD/age.key \
 # Validate a Helm value change against the real chart
 helm template <release> <repo>/<chart> --version <v> -n <ns> -f infra/<comp>/values.yaml
 
+# Cloudflare settings outside the cluster: DNS, rules, R2 (OpenTofu, creds via sops)
+./tofu/tofu.sh plan
+
 # kubectl runs on the node; the KUBECONFIG export is required
 ssh kcfam 'export KUBECONFIG=/etc/rancher/k3s/k3s.yaml; kubectl -n argocd get pods'
 ```
