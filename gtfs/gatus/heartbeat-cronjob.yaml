@@ -15,7 +15,7 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 0
-      activeDeadlineSeconds: 50
+      activeDeadlineSeconds: 55
       ttlSecondsAfterFinished: 300
       template:
         metadata:
@@ -34,9 +34,11 @@ spec:
                 - sh
                 - -c
                 - |
-                  curl -fsS -m 10 -o /dev/null https://status.gtfs.zone/health \
-                    && exec curl -fsS -m 10 --retry 3 -o /dev/null "$HEALTHCHECKS_PING_URL"
-                  curl -fsS -m 10 --retry 3 -o /dev/null "$HEALTHCHECKS_PING_URL/fail"
+                  # Retries transient errors; on failure, sends curl's error as the /fail body
+                  err=$(curl -fsS -m 8 --retry 2 --retry-all-errors --retry-delay 2 \
+                    -o /dev/null https://status.gtfs.zone/health 2>&1) \
+                    && exec curl -fsS -m 5 --retry 3 -o /dev/null "$HEALTHCHECKS_PING_URL"
+                  curl -fsS -m 5 --retry 3 -o /dev/null --data-raw "$err" "$HEALTHCHECKS_PING_URL/fail"
                   exit 1
               env:
                 - name: HEALTHCHECKS_PING_URL
