@@ -87,8 +87,9 @@ packages are public (anonymously pullable), so no `imagePullSecrets` are used.
 
 `tofu/` holds the Cloudflare side of what lives outside the cluster: gtfs.zone's records with nothing in the cluster behind them (apex and
 `www` on GitHub Pages, MX, TXT), the static hosts' R2 buckets, custom domains
-and Cloudflare rules (directory URLs to `index.html`, cache, CORS headers), and
-the zone's SSL mode. Every other gtfs.zone record belongs to external-dns.
+and Cloudflare rules (directory URLs to `index.html`, cache, CORS headers), the
+CORS proxy Worker on `cors.gtfs.zone`, and zone settings (SSL mode, Always Use
+HTTPS, HTML rewriting features off). Every other gtfs.zone record belongs to external-dns.
 
 ```bash
 ./tofu/tofu.sh init
@@ -104,7 +105,7 @@ of old versions). Credentials:
 | Key | What | Scope |
 |---|---|---|
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | B2 key `gtfs-zone-tfstate` (state) | bucket `gtfs-zone-tfstate`, read and write |
-| `CLOUDFLARE_API_TOKEN` | token `gtfs-zone-tofu` | zone gtfs.zone: Zone Read; DNS, Zone Settings, Transform Rules, Cache Settings Edit. Account: Workers R2 Storage Edit |
+| `CLOUDFLARE_API_TOKEN` | token `gtfs-zone-tofu` | zone gtfs.zone: Zone Read; DNS, Zone Settings, Transform Rules, Cache Settings Edit. Account: Workers R2 Storage Edit, Workers Scripts Edit |
 
 **Static hosts are R2 buckets** (location `enam`) with a custom domain each:
 
@@ -120,6 +121,14 @@ Manage API tokens, each scoped to its own bucket; the values are in
 buckets, so tools need the full `bucket/path`. The S3 endpoint is
 `https://<account_id>.r2.cloudflarestorage.com`, region `auto`. Custom error
 pages need a paid plan, so a missing key is R2's plain 404.
+
+**CORS proxy**: `https://cors.gtfs.zone/<target URL>` is a Worker
+(`tofu/worker/cors-proxy.js`) for browser fetches of feeds that send no CORS
+headers. It answers only origins in `local.cors_proxy_origins`, rejects private
+and `localhost` targets, strips cookies and credentials, and follows redirects
+(`x-final-url`). Workers cannot fetch a bare IP (error 1003), so an IP-literal
+target `1.2.3.4` is fetched as `1.2.3.4.sslip.io`, which the public sslip.io DNS
+resolves back to that address. Gatus probes it through `data.gtfs.zone`.
 
 `archive.rt.gtfs.zone` is the legacy rt-archive host, still served by Garage
 and no longer written. The B2 bucket `gtfs-zone-tfstate` (private, keeps prior

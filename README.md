@@ -87,6 +87,7 @@ flowchart LR
 | `status.<domain>` | Public status page (Gatus) |
 | `argocd.<domain>` | ArgoCD UI |
 | `data.<domain>` | Public source-catalog artifacts (`feeds.json`, `sources.json`, ...) from a Cloudflare R2 bucket |
+| `cors.<domain>` | CORS proxy for feed fetches from the web apps (Cloudflare Worker) |
 | `dagster.<domain>` | Dagster UI for feed-catalog (gated on the `gtfs-admins` group) |
 | `list.<domain>` | Source catalog list and world map (feed-list) |
 | `edit.<domain>` | GTFS editor (gtfs-zone-editor) |
