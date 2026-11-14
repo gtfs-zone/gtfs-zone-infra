@@ -83,6 +83,64 @@ need to decrypt: SOPS leaves key names readable.
 **Images:** CI publishes `:vX.Y.Z` + `:latest` on `v*` tags only. Bumping an image is a manifest edit plus a commit. The `ghcr.io/gtfs-zone`
 packages are public (anonymously pullable), so no `imagePullSecrets` are used.
 
+## Edge config (OpenTofu)
+
+`tofu/` holds the Cloudflare side of what lives outside the cluster: gtfs.zone's records with nothing in the cluster behind them (apex and
+`www` on GitHub Pages, MX, TXT), the static hosts' R2 buckets, custom domains
+and Cloudflare rules (directory URLs to `index.html`, cache, CORS headers), the
+CORS proxy Worker on `cors.gtfs.zone`, and zone settings (SSL mode, Always Use
+HTTPS, HTML rewriting features off). Every other gtfs.zone record belongs to external-dns.
+
+```bash
+./tofu/tofu.sh init
+./tofu/tofu.sh plan
+./tofu/tofu.sh apply
+```
+
+`tofu.sh` runs `tofu` under `sops exec-env` with `tofu/secrets/tofu.enc.yaml`;
+`./tofu/set-secret.sh KEY` prompts for one value and stores it. State is in the
+private B2 bucket `gtfs-zone-tfstate` (S3 backend, no locking; B2 keeps 90 days
+of old versions). Credentials:
+
+| Key | What | Scope |
+|---|---|---|
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | B2 key `gtfs-zone-tfstate` (state) | bucket `gtfs-zone-tfstate`, read and write |
+| `CLOUDFLARE_API_TOKEN` | token `gtfs-zone-tofu` | zone gtfs.zone: Zone Read; DNS, Zone Settings, Transform Rules, Cache Settings Edit. Account: Workers R2 Storage Edit, Workers Scripts Edit |
+
+**Static hosts are R2 buckets** (location `enam`) with a custom domain each:
+
+| Host | Bucket | Writer | Writer key |
+|---|---|---|---|
+| `sites.gtfs.zone` | `gtfs-zone-sites` | timetable-sites | `TIMETABLE_SITES_R2_*` |
+| `data.gtfs.zone` | `gtfs-zone-data` | feed-catalog | `FEED_CATALOG_R2_*` |
+| `rt-archive.gtfs.zone` | `gtfs-zone-rt-archive` | rt-archive TIDES build | `RT_ARCHIVE_TIDES_R2_*` |
+
+Writer keys are R2 API tokens (Object Read & Write) made by hand under R2 >
+Manage API tokens, each scoped to its own bucket; the values are in
+`gtfs/secrets/gtfs-app-secrets.enc.yaml`. A bucket-scoped token cannot list
+buckets, so tools need the full `bucket/path`. The S3 endpoint is
+`https://<account_id>.r2.cloudflarestorage.com`, region `auto`. Custom error
+pages need a paid plan, so a missing key is R2's plain 404.
+
+**CORS proxy**: `https://cors.gtfs.zone/<target URL>` is a Worker
+(`tofu/worker/cors-proxy.js`) for browser fetches of feeds that send no CORS
+headers. It answers only origins in `local.cors_proxy_origins`, rejects private
+and `localhost` targets, strips cookies and credentials, and follows redirects
+(`x-final-url`). Workers cannot fetch a bare IP (error 1003), so an IP-literal
+target `1.2.3.4` is fetched as `1.2.3.4.sslip.io`, which the public sslip.io DNS
+resolves back to that address. Gatus probes it through `data.gtfs.zone`.
+
+`archive.rt.gtfs.zone` is the legacy rt-archive host, still served by Garage
+and no longer written. The B2 bucket `gtfs-zone-tfstate` (private, keeps prior
+versions for 90 days, key above) holds only the tofu state.
+
+**Adding a static host:** add it to `static_hosts` in `tofu/locals.tf` with its
+bucket and whether it gets an index rewrite or CORS. If the name was served
+from the cluster, remove the external-dns target annotation (or the
+IngressRoute) first and wait for external-dns to delete its record: the custom
+domain will not take a name that already has one. A new custom domain answers
+403 / error 1014 for about a minute while it is pending.
+
 ## Patterns worth knowing
 
 **Monitoring is declarative.** Uptime Kuma was replaced by Gatus because Kuma
@@ -149,7 +207,7 @@ robots.txt as "no robots.txt", crawl every gated URL and report each 401.
 
 **Adding a hostname:** add an `IngressRoute` with the
 `external-dns.alpha.kubernetes.io/target: "73.4.232.254"` annotation; external-dns
-creates the Porkbun record from it. Remember a DNS wildcard matches exactly **one**
+creates the Cloudflare record from it. Remember a DNS wildcard matches exactly **one**
 label: `*.gtfs.zone` does not cover `anything.rt.gtfs.zone`, which is why
 `gtfs-zone-tls` also carries `*.rt.gtfs.zone`.
 

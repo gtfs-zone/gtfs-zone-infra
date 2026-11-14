@@ -43,9 +43,10 @@ extraArgs:
 # Full ownership: create AND delete records to match cluster state, tagged with a
 # TXT owner record so external-dns only touches records it created.
 #
-# The apex records (GitHub Pages' A/AAAA set), MX, SPF/verification TXT, `www` and
-# the GitHub Pages challenge TXT are kept by hand in Cloudflare. They carry no
-# ownership TXT and nothing in the cluster declares them, so `sync` leaves them alone.
+# The apex records (GitHub Pages' A/AAAA set), MX, SPF/verification TXT, `www`,
+# the GitHub Pages challenge TXT and the R2 static hosts are managed in tofu/.
+# They carry no ownership TXT and nothing in the cluster declares them, so `sync`
+# leaves them alone.
 policy: sync
 registry: txt
 txtOwnerId: gtfs-k3s

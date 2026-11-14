@@ -22,28 +22,36 @@ Each of these cost real debugging time.
 - **Helm `pre-upgrade` hooks under ArgoCD** become PreSync hooks and run before
   the chart's own ServiceAccount exists. Longhorn ships one; it is disabled via
   `preUpgradeChecker.jobEnabled: false`.
-- **Helm release names change ServiceAccount names.** The cert-manager Porkbun
-  webhook must be told `certManager.serviceAccountName: infra-cert-manager`.
-- **DNS-01 apex/wildcard collision.** `gtfs.zone` and `*.gtfs.zone` validate at
-  the same TXT name and the Porkbun webhook replaces rather than appends, so
-  requesting both on one Certificate deadlocks issuance.
+- **Cloudflare Universal SSL covers one level.** `*.gtfs.zone` is covered,
+  `x.rt.gtfs.zone` is not, so a proxied (orange-cloud) host must be one label
+  deep. DNS-only records are unaffected (cluster TLS comes from cert-manager).
+- **Two writers on one zone.** external-dns owns the cluster records (marked by
+  its ownership TXT); `tofu/` owns everything else. A record declared in both
+  flips back and forth, and Tofu can't create a name external-dns still holds.
 - **Longhorn volumes mount root-owned and contain a `lost+found`,** which makes
   some images skip their own permission fixup. Use `fsGroup`.
-- **Chart-default port mismatches.** The external-dns chart hardcodes the webhook
-  sidecar's containerPort/probes to 8080 while the Porkbun webhook binary
-  defaults to :8888. Always render the chart.
 - **Host inotify limits.** k3s + Longhorn + containerd share root's
   `fs.inotify.max_user_instances`; at the default 128 they exhausted it and
   home-docker's Traefik could not start its file provider at all. Raised to 1024
   in `/etc/sysctl.d/99-inotify.conf`.
 - **Garage picks the bucket from the Host header.** The `s3_web` endpoint looks a
   Host that does not end in its `root_domain` up as a bucket global alias, which
-  is why the public bucket is aliased literally `data.gtfs.zone`. A Traefik
+  is why the public bucket is aliased literally `archive.rt.gtfs.zone`. A Traefik
   Host-rewrite middleware in front of it rewrites the bucket name and returns a
   404 that never says why. On the S3 side, `S3_REGION` is part of the SigV4
   signature, so a mismatch with `garage.toml`'s `s3_region` is a 403 rather than a
   redirect, and `PutBucketCors` is refused from a key without `owner` on the
   bucket.
+- **B2 public download URLs carry no validators.** `f005.backblazeb2.com/file/...`
+  sends no `ETag` or `Last-Modified` and ignores conditional requests, which
+  feed consumers on `data.gtfs.zone` use to detect updates. B2's S3 endpoint has
+  them but answers any Host but its own with `400 Bad hostname`, and Cloudflare
+  Free cannot override the origin Host, so the static hosts moved to R2.
+- **R2 and the S3 tools.** rclone 1.60 sends `HEAD ?versionId=` after each PUT
+  and R2 answers 501: use `--s3-no-head`. A bucket-scoped R2 token gets
+  AccessDenied on a bare bucket listing; address `bucket/path`.
+- **`cf-cache-status` on HEAD is always DYNAMIC** for the R2 hosts; test caching
+  with GET.
 - **`DAGSTER_HOME` must be a directory the image owns.** `/app` is root-owned and
   the image runs as `bridge`, so the default lands somewhere unwritable and fails
   late and confusingly, not at startup: the same trap as static-importer-beat's

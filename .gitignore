@@ -1,22 +1,7 @@
-# Terraform state, contains sensitive outputs
-tf/terraform.tfstate
-tf/terraform.tfstate.backup
-tf/terraform.tfstate.*.backup
-tf/.terraform/
-tf/.terraform.lock.hcl
-tf/.terraform.tfstate.lock.info
-
-# Secrets file
-tf/secrets.auto.tfvars
-
-# tf-monitors
-tf-monitors/terraform.tfstate
-tf-monitors/terraform.tfstate.backup
-tf-monitors/terraform.tfstate.*.backup
-tf-monitors/.terraform/
-tf-monitors/.terraform.lock.hcl
-tf-monitors/.terraform.tfstate.lock.info
-tf-monitors/secrets.auto.tfvars
+# OpenTofu working files; state lives in B2, the lock file is committed
+tofu/.terraform/
+tofu/*.tfstate
+tofu/*.tfstate.*
 
 # SOPS age private key. NEVER commit. Public recipient lives in .sops.yaml.
 age.key

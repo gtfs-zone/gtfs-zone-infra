@@ -1,7 +1,7 @@
 ## infra/cert-manager/values.yaml: Helm values for the cert-manager chart.
 ##
-## Operator + CRDs. DNS-01 solving for Porkbun is provided by a separate webhook
-## (see webhook-values.yaml and manifests/clusterissuer.yaml).
+## Operator + CRDs. DNS-01 is solved by the built-in Cloudflare solver
+## (manifests/clusterissuer.yaml).
 crds:
   # Install and manage the cert-manager CRDs via the chart.
   enabled: true
