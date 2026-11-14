@@ -83,6 +83,19 @@ endpoints:
     alerts:
       - type: telegram
 
+  # Worker on Cloudflare (tofu/workers.tf); fetches our own manifest through it.
+  - name: CORS proxy
+    group: Feed
+    url: https://cors.gtfs.zone/https://data.gtfs.zone/manifest.json
+    interval: 300s
+    headers:
+      Origin: https://edit.gtfs.zone
+    conditions:
+      - "[STATUS] == 200"
+      - "len([BODY]) > 0"
+    alerts:
+      - type: telegram
+
   # ── Sites ───────────────────────────────────────────────────────────────────
   - name: gtfs.zone
     group: Sites
