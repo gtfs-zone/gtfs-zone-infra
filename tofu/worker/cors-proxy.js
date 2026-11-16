@@ -52,6 +52,16 @@ function sslipHost(host, ip) {
   return `${host.slice(1, -1).replace(/:/g, "-")}.sslip.io`;
 }
 
+// True if origin is in the allowlist. An entry ending in ":*" matches its
+// scheme and host on any port.
+function isAllowed(origin, allowed) {
+  return allowed.some((a) => {
+    if (!a.endsWith(":*")) return a === origin;
+    const base = a.slice(0, -2);
+    return origin === base || (origin.startsWith(base + ":") && /^\d+$/.test(origin.slice(base.length + 1)));
+  });
+}
+
 function corsHeaders(origin) {
   return { "access-control-allow-origin": origin, vary: "Origin" };
 }
@@ -66,11 +76,11 @@ export default {
     if (!origin && req.headers.get("referer")) {
       try {
         const r = new URL(req.headers.get("referer")).origin;
-        if (allowed.includes(r)) origin = r;
+        if (isAllowed(r, allowed)) origin = r;
       } catch {}
     }
     if (!origin) return text(400, "Missing required request header: Origin");
-    if (!allowed.includes(origin)) return text(403, `Origin ${origin} is not allowed`);
+    if (!isAllowed(origin, allowed)) return text(403, `Origin ${origin} is not allowed`);
     const cors = corsHeaders(origin);
 
     if (req.method === "OPTIONS") {

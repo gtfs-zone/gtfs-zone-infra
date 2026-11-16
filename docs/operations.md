@@ -124,7 +124,8 @@ pages need a paid plan, so a missing key is R2's plain 404.
 
 **CORS proxy**: `https://cors.gtfs.zone/<target URL>` is a Worker
 (`tofu/worker/cors-proxy.js`) for browser fetches of feeds that send no CORS
-headers. It answers only origins in `local.cors_proxy_origins`, rejects private
+headers. It answers only origins in `local.cors_proxy_origins` (`http://localhost`
+and `http://127.0.0.1` on any port, via a `:*` entry), rejects private
 and `localhost` targets, strips cookies and credentials, and follows redirects
 (`x-final-url`). Workers cannot fetch a bare IP (error 1003), so an IP-literal
 target `1.2.3.4` is fetched as `1.2.3.4.sslip.io`, which the public sslip.io DNS
