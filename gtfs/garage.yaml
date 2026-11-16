@@ -74,6 +74,7 @@ data:
     crimes.gtfs.zone crimes CRIMES_S3_ACCESS_KEY CRIMES_S3_SECRET_KEY yes no
     rt-archive rt-archive RT_ARCHIVE_S3_ACCESS_KEY RT_ARCHIVE_S3_SECRET_KEY no no
     archive.rt.gtfs.zone rt-archive-tides RT_ARCHIVE_TIDES_S3_ACCESS_KEY RT_ARCHIVE_TIDES_S3_SECRET_KEY yes no
+    gtfs-zips feed-catalog-zips FEED_CATALOG_ZIPS_S3_ACCESS_KEY FEED_CATALOG_ZIPS_S3_SECRET_KEY no no
     "
 
     api() {
@@ -353,6 +354,17 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: RT_ARCHIVE_TIDES_S3_SECRET_KEY
+            # feed-catalog's pair, scoped to the private gtfs-zips bucket.
+            - name: FEED_CATALOG_ZIPS_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: FEED_CATALOG_ZIPS_S3_ACCESS_KEY
+            - name: FEED_CATALOG_ZIPS_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: FEED_CATALOG_ZIPS_S3_SECRET_KEY
           volumeMounts:
             - name: config
               mountPath: /etc/garage

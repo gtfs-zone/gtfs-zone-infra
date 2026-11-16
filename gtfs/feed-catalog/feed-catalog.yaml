@@ -78,6 +78,28 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: FEED_CATALOG_R2_SECRET_KEY
+            # The private schedule bucket in Garage: the latest body of every
+            # schedule, written by feed_fetch.
+            - name: ZIPS_S3_ENDPOINT
+              value: http://garage:3900
+            - name: ZIPS_S3_BUCKET
+              value: gtfs-zips
+            - name: ZIPS_S3_REGION
+              value: garage
+            - name: ZIPS_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: FEED_CATALOG_ZIPS_S3_ACCESS_KEY
+            - name: ZIPS_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: FEED_CATALOG_ZIPS_S3_SECRET_KEY
+            # Downloads land here before upload: up to FETCH_CONCURRENCY (8)
+            # bodies of up to 2 GB each.
+            - name: FETCH_WORKDIR
+              value: /work
             # A refresh token, exchanged for a short-lived access token at the
             # start of each run. Empty is not an error: the run then covers
             # Transitland and the curated set alone.
@@ -99,6 +121,8 @@ spec:
               mountPath: /app/dagster_home/dagster.yaml
               subPath: dagster.yaml
               readOnly: true
+            - name: work
+              mountPath: /work
           # gRPC, so a TCP check is the whole check available without a probe
           # client. The code server binds only once the module imports, which
           # is the failure worth catching here.
@@ -116,6 +140,9 @@ spec:
         - name: dagster-config
           configMap:
             name: feed-catalog-dagster
+        - name: work
+          emptyDir:
+            sizeLimit: 16Gi
 ---
 apiVersion: v1
 kind: Service
