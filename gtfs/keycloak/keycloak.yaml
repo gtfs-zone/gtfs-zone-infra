@@ -41,7 +41,7 @@ spec:
         # better than envsubst anyway, since it substitutes exactly the ten
         # names below and leaves any other `$` in the file alone.
         - name: render-realm
-          image: quay.io/keycloak/keycloak:26.4
+          image: quay.io/keycloak/keycloak:26.4.7
           command: ["/bin/bash", "-c"]
           args:
             - |
@@ -138,7 +138,7 @@ spec:
               mountPath: /realm
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:26.4
+          image: quay.io/keycloak/keycloak:26.4.7
           # `start`, not `start-dev`: production mode, with TLS terminated at
           # Traefik. --import-realm is create-only: an existing realm is NOT
           # updated on restart, so realm changes after the first boot have to be
@@ -171,6 +171,9 @@ spec:
               value: xforwarded
             - name: KC_HEALTH_ENABLED
               value: "true"
+            # CVE-2026-114938 mitigation; drop once the image ships a fixed JDK.
+            - name: JAVA_OPTS_APPEND
+              value: -XX:-UseBASE64Intrinsics
             - name: KC_BOOTSTRAP_ADMIN_USERNAME
               value: admin
             - name: KC_BOOTSTRAP_ADMIN_PASSWORD
