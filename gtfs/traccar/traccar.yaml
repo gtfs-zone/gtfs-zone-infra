@@ -42,6 +42,10 @@ spec:
             # Makes env override every traccar.xml key. Verified on 6.14.5.
             - name: CONFIG_USE_ENVIRONMENT_VARIABLES
               value: "true"
+            # CVE-2026-114938 mitigation, read by the java launcher; drop once
+            # the bundled JRE is fixed.
+            - name: JDK_JAVA_OPTIONS
+              value: -XX:-UseBASE64Intrinsics
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
