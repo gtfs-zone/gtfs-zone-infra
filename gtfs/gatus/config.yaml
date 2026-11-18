@@ -303,6 +303,33 @@ endpoints:
     alerts:
       - type: telegram
 
+  # Every catalog with rows today. A catalog that cannot be fetched yields no
+  # rows rather than failing the run, so a lost catalog shows up only here.
+  - name: Catalog sources
+    group: Data
+    url: https://data.gtfs.zone/summary.json
+    interval: 1h
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].by_catalog.transitland > 1000"
+      - "[BODY].by_catalog.mobilitydatabase > 1000"
+      - "[BODY].by_catalog.ntd > 1000"
+    alerts:
+      - type: telegram
+
+  # The NTD weblinks upstream, the same bare GET feed-catalog sends. A SoQL
+  # query there needs an app token; this checks the anonymous dump stays open.
+  # About 1 MB, so every 6h.
+  - name: NTD weblinks
+    group: Upstream
+    url: https://data.transportation.gov/api/v3/views/2u7n-ub22/query.json
+    interval: 6h
+    conditions:
+      - "[STATUS] == 200"
+      - "has([BODY][0].ntd_id) == true"
+    alerts:
+      - type: telegram
+
   # ── DNS ─────────────────────────────────────────────────────────────────────
   - name: Porkbun record for rt.gtfs.zone
     group: DNS
