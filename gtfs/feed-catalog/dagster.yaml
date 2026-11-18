@@ -55,5 +55,15 @@ compute_logs:
   module: dagster._core.storage.noop_compute_log_manager
   class: NoOpComputeLogManager
 
+# Each code location's module loggers (children of its package logger) go to
+# the run's event log and the run process's stderr at INFO and above.
+python_logs:
+  python_log_level: INFO
+  managed_python_loggers:
+    - gtfs_zone_feed_catalog
+    - gtfs_zone_timetable_sites
+    - gtfs_zone_crimes
+    - gtfs_zone_rt_archive
+
 telemetry:
   enabled: false
