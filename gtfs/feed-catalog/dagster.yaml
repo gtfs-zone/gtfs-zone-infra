@@ -23,13 +23,28 @@ run_launcher:
   module: dagster._core.launcher
   class: DefaultRunLauncher
 
-# Queued, so the daemon serialises runs: a daily run that overruns a day would
-# otherwise have a second copy of itself hammering forty thousand origins.
+# Queued, with limits by tag rather than one global slot:
+# - one run per code location: each code-server pod is sized for exactly one
+#   run, and a daily catalog run that overruns a day must not have a second
+#   copy of itself hammering forty thousand origins. Every run carries
+#   `dagster/code_location`, whatever launched it.
+# - one `gtfs.zone/memory: heavy` run: the sites and crimes jobs carry the tag,
+#   and their worker pools (about 9 and 5 GiB at peak) do not both fit beside
+#   the rest of the node.
+# max_concurrent_runs is a backstop at one run per code location.
 run_coordinator:
   module: dagster._core.run_coordinator
   class: QueuedRunCoordinator
   config:
-    max_concurrent_runs: 1
+    max_concurrent_runs: 4
+    tag_concurrency_limits:
+      - key: dagster/code_location
+        value:
+          applyLimitPerUniqueValue: true
+        limit: 1
+      - key: gtfs.zone/memory
+        value: heavy
+        limit: 1
 
 # A run executes inside the code-server pod, so replacing that pod (an image
 # bump) kills the run process mid-run. DefaultRunLauncher has no worker health
@@ -38,7 +53,7 @@ run_coordinator:
 # zip's facts takes longer), so one still STARTED at 8h is dead: the daemon
 # cancels it, the terminate reaches a code server that never knew the run and
 # fails, and the cancel timeout then marks it CANCELED. That
-# frees the single queue slot. The Gatus publish heartbeat is still the page.
+# frees its code location's slot. The Gatus publish heartbeat is still the page.
 # max_resume_run_attempts is 0 because DefaultRunLauncher cannot resume.
 run_monitoring:
   enabled: true

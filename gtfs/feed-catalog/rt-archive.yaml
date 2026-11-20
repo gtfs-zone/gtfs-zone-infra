@@ -2,8 +2,8 @@
 # Builds one TIDES data package per feed and service day from the raw
 # recordings in rt-archive and publishes it to rt-archive.gtfs.zone (R2). A fourth
 # code location in feed-catalog's Dagster instance: runs share its run storage
-# and single-run queue, so the daily schedule (16:00 UTC) sits after the
-# catalog (09:00), timetable-sites (11:00) and crimes (14:00).
+# and run queue, and the daily schedule (16:00 UTC) sits after the catalog
+# (09:00), timetable-sites (11:00) and crimes (14:00).
 #
 # Same image as the recorder. Partitions are read from the feeds.yaml
 # ConfigMap generated in gtfs/rt-archive/, so a feed edit rolls this pod too.

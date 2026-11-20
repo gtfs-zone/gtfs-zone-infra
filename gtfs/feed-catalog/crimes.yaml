@@ -1,8 +1,9 @@
 # ── crimes (Dagster code location) ────────────────────────────────────────────
 # Judges every feed in the catalog and publishes crimes.json for
 # crimes.gtfs.zone. A third code location in feed-catalog's Dagster instance:
-# runs share its run storage and single-run queue, so the daily schedule
-# (14:00 UTC) sits after the catalog (09:00) and timetable-sites (11:00).
+# runs share its run storage and run queue. The daily schedule (14:00 UTC) sits
+# after the catalog (09:00), and crimes runs are tagged
+# `gtfs.zone/memory: heavy`, so they wait for any timetable-sites shard.
 #
 # With DefaultRunLauncher a run executes inside this pod. It judges up to
 # CRIMES_WORKERS zips at once, each in a process killed past

@@ -60,9 +60,11 @@ Each of these cost real debugging time.
 - **Dagster runs live inside the code-server pod.** With `DefaultRunLauncher`, an
   image bump during the ~40 min daily run kills the run process, and nothing can
   see it die (`DefaultRunLauncher` has no worker health check): the run sits in
-  STARTED, and with `max_concurrent_runs: 1` it holds the queue. What frees it is
-  `max_runtime_seconds` moving it to CANCELING and `cancel_timeout_seconds`
-  marking it CANCELED; a UI cancel alone leaves it in CANCELING forever.
+  STARTED, and it holds its code location's single run slot (and the heavy
+  slot, for sites and crimes). `max_runtime_seconds` moves it to CANCELING and
+  `cancel_timeout_seconds` marks it CANCELED; a plain UI cancel leaves it in
+  CANCELING forever. To free it at once, terminate it with the
+  `MARK_AS_CANCELED_IMMEDIATELY` policy (the UI's force-terminate).
 - **Two oauth2-proxies must not share anything.** `oauth2-proxy-admin` has its
   own cookie name, its own Redis DB and a cookie domain of exactly
   `dagster.gtfs.zone`; two instances both writing `_oauth2_proxy` on `.gtfs.zone`

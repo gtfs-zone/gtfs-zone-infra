@@ -1,8 +1,9 @@
 # ── timetable-sites (Dagster code location) ───────────────────────────────────
 # Builds the static timetable sites at sites.gtfs.zone. A second code location
 # in feed-catalog's Dagster instance: the webserver and daemon are feed-catalog's,
-# and runs share its Postgres run storage and its single-run queue, so the daily
-# schedule (11:00 UTC) sits after the catalog run (09:00 UTC).
+# and runs share its Postgres run storage and its run queue. The daily schedule
+# (11:00 UTC) sits after the catalog run (09:00 UTC), and sites runs are tagged
+# `gtfs.zone/memory: heavy`, so a shard never overlaps a crimes run.
 #
 # With DefaultRunLauncher a run executes inside this pod, so it carries the
 # instance config and the run storage credentials like feed-catalog-code. A run
