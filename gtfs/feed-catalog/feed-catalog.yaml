@@ -97,9 +97,12 @@ spec:
                   name: gtfs-app-secrets
                   key: FEED_CATALOG_ZIPS_S3_SECRET_KEY
             # Downloads land here before upload: up to FETCH_CONCURRENCY (8)
-            # bodies of up to 2 GB each.
+            # bodies of up to FETCH_MAX_BYTES each. Only UK BODS is over 1 GB.
             - name: FETCH_WORKDIR
               value: /work
+            # UK BODS passed 2 GB on 2026-11-21.
+            - name: FETCH_MAX_BYTES
+              value: "4000000000"
             # A refresh token, exchanged for a short-lived access token at the
             # start of each run. Empty is not an error: the run then covers
             # Transitland and the curated set alone.
