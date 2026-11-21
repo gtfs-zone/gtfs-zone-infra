@@ -158,8 +158,14 @@ chat id live in `gtfs-app-secrets` (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`)
 and reach the config as `${VAR}`, so they never enter the ConfigMap. Note that
 `default-alert` under the provider is a **template, not an opt-out**: an endpoint
 sends nothing unless it also carries its own `alerts: - type: telegram`.
-Verified against v5.36.0. Validate a config change by running the image against
-the file before pushing:
+Verified against v5.36.0.
+
+Failed Dagster runs page the same chat from outside Gatus: feed-catalog's
+`run_failure_alert` sensor watches every code location and posts the job, the
+error and a run link for each FAILURE. A canceled run sends nothing. The sensor
+runs in `feed-catalog-code`, which has the two `TELEGRAM_*` keys in its env.
+
+Validate a Gatus config change by running the image against the file before pushing:
 
 ```bash
 docker run --rm -e TELEGRAM_BOT_TOKEN=1:x -e TELEGRAM_CHAT_ID=1 \

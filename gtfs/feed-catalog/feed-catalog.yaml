@@ -119,6 +119,17 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: GATUS_FEED_CATALOG_TOKEN
+            # run_failure_alert posts each failed run, in any code location, here.
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: TELEGRAM_BOT_TOKEN
+            - name: TELEGRAM_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: TELEGRAM_CHAT_ID
           volumeMounts:
             - name: dagster-config
               mountPath: /app/dagster_home/dagster.yaml
