@@ -41,6 +41,10 @@ spec:
           env:
             - name: GATUS_CONFIG_PATH
               value: /config/config.yaml
+            # Soft heap cap below the memory limit: Go GC collects before the
+            # cgroup OOM-kills on large [BODY] checks (feeds.json, NTD weblinks).
+            - name: GOMEMLIMIT
+              value: 400MiB
             # Telegram alerting. config.yaml refers to these as ${VAR}; Gatus
             # substitutes at load, so the bot token never enters the ConfigMap.
             - name: TELEGRAM_BOT_TOKEN
@@ -108,9 +112,9 @@ spec:
           resources:
             requests:
               cpu: 10m
-              memory: 32Mi
+              memory: 192Mi
             limits:
-              memory: 256Mi
+              memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
