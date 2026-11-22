@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
         - name: rt-pollers
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.5
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.5.0
           env:
             - name: SOURCE
               value: amtrak
@@ -95,10 +95,14 @@ spec:
     spec:
       containers:
         - name: rt-pollers
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.5
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.5.0
           env:
             - name: SOURCE
               value: buswhere
+            # Positions only: rt-delay-estimator predicts Columbia County's
+            # trip updates.
+            - name: TRIP_UPDATES
+              value: "off"
             - name: INGEST_TRACKER_ID
               # Tracker.id for device_key columbia-county.
               value: eac865d0127347eccc850b894baa6048
@@ -144,7 +148,7 @@ spec:
     spec:
       containers:
         - name: rt-pollers
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.4.5
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-pollers:v0.5.0
           env:
             - name: SOURCE
               value: hudsonlink
