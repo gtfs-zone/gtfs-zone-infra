@@ -11,6 +11,8 @@
 #   service_alerts
 #   poll               seconds between polls (default 15)
 #   build_lag_days     days after the service date the build waits (default 1)
+#   upstream           name: {url, headers} recorded as raw `up` lines on every
+#                      poll, redirects kept; the TIDES build ignores them
 #
 # rt.gtfs.zone feeds are polled through the in-cluster gtfs-api Service. Their
 # static zips are the upstream URLs: rt-api's /<feed>/gtfs.zip only serves
@@ -35,6 +37,38 @@ feeds:
     vehicle_positions: http://gtfs-api:8000/columbia-county/vehicle_positions.pb
     trip_updates: http://gtfs-api:8000/columbia-county/trip_updates.pb
     service_alerts: http://gtfs-api:8000/columbia-county/service_alerts.pb
+    # The buswhere route snapshots rt-pollers reads, one per mapped slug.
+    # Without these headers buswhere serves the HTML page.
+    upstream:
+      shopping_shuttle:
+        url: https://buswhere.com/columbiacountyny/routes/shopping_shuttle?initial=true&filter=
+        headers: &buswhere_headers
+          Accept: application/json, text/javascript, */*; q=0.01
+          X-Requested-With: XMLHttpRequest
+      shopping_shuttle_sat:
+        url: https://buswhere.com/columbiacountyny/routes/shopping_shuttle_sat?initial=true&filter=
+        headers: *buswhere_headers
+      chatham:
+        url: https://buswhere.com/columbiacountyny/routes/chatham?initial=true&filter=
+        headers: *buswhere_headers
+      philmont:
+        url: https://buswhere.com/columbiacountyny/routes/philmont?initial=true&filter=
+        headers: *buswhere_headers
+      copake_:
+        url: https://buswhere.com/columbiacountyny/routes/copake_?initial=true&filter=
+        headers: *buswhere_headers
+      hudson__albany_a_am:
+        url: https://buswhere.com/columbiacountyny/routes/hudson__albany_a_am?initial=true&filter=
+        headers: *buswhere_headers
+      hudson__albany_c__am:
+        url: https://buswhere.com/columbiacountyny/routes/hudson__albany_c__am?initial=true&filter=
+        headers: *buswhere_headers
+      hudson__albany_b_pm:
+        url: https://buswhere.com/columbiacountyny/routes/hudson__albany_b_pm?initial=true&filter=
+        headers: *buswhere_headers
+      hudson__albany_d_pm:
+        url: https://buswhere.com/columbiacountyny/routes/hudson__albany_d_pm?initial=true&filter=
+        headers: *buswhere_headers
   hudsonlink:
     enabled: true
     producer: rt.gtfs.zone
