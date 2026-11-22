@@ -37,11 +37,10 @@ data:
     api_bind_addr = "[::]:3900"
     root_domain = ".s3.garage.internal"
 
-    # Static web serving, which is what makes archive.rt.gtfs.zone a public
-    # HTTP endpoint rather than an S3 API only reachable with a signed request.
-    # Garage picks the bucket from the Host header: a Host that does not end in
-    # root_domain is looked up as a global alias, which is why the public
-    # bucket is aliased literally `archive.rt.gtfs.zone`.
+    # Static web serving: a bucket with website access is readable over plain
+    # HTTP, not only through signed S3 requests. Garage picks the bucket from
+    # the Host header: a Host that does not end in root_domain is looked up as
+    # a global alias, so a bucket served this way is aliased by its hostname.
     [s3_web]
     bind_addr = "[::]:3902"
     root_domain = ".web.garage.internal"
@@ -73,7 +72,6 @@ data:
     gtfs-feeds      gtfs            S3_ACCESS_KEY                 S3_SECRET_KEY                 no  no yes
     crimes.gtfs.zone crimes CRIMES_S3_ACCESS_KEY CRIMES_S3_SECRET_KEY yes no yes
     rt-archive rt-archive RT_ARCHIVE_S3_ACCESS_KEY RT_ARCHIVE_S3_SECRET_KEY no no yes
-    archive.rt.gtfs.zone rt-archive-tides RT_ARCHIVE_TIDES_S3_ACCESS_KEY RT_ARCHIVE_TIDES_S3_SECRET_KEY yes no yes
     gtfs-zips feed-catalog-zips FEED_CATALOG_ZIPS_S3_ACCESS_KEY FEED_CATALOG_ZIPS_S3_SECRET_KEY no no yes
     gtfs-zips timetable-sites-zips TIMETABLE_SITES_ZIPS_S3_ACCESS_KEY TIMETABLE_SITES_ZIPS_S3_SECRET_KEY no no no
     "
@@ -344,17 +342,6 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: RT_ARCHIVE_S3_SECRET_KEY
-            # rt-archive TIDES build's pair, scoped to the archive.rt.gtfs.zone bucket.
-            - name: RT_ARCHIVE_TIDES_S3_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: gtfs-app-secrets
-                  key: RT_ARCHIVE_TIDES_S3_ACCESS_KEY
-            - name: RT_ARCHIVE_TIDES_S3_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: gtfs-app-secrets
-                  key: RT_ARCHIVE_TIDES_S3_SECRET_KEY
             # feed-catalog's pair, scoped to the private gtfs-zips bucket.
             - name: FEED_CATALOG_ZIPS_S3_ACCESS_KEY
               valueFrom:

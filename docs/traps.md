@@ -35,8 +35,8 @@ Each of these cost real debugging time.
   home-docker's Traefik could not start its file provider at all. Raised to 1024
   in `/etc/sysctl.d/99-inotify.conf`.
 - **Garage picks the bucket from the Host header.** The `s3_web` endpoint looks a
-  Host that does not end in its `root_domain` up as a bucket global alias, which
-  is why the public bucket is aliased literally `archive.rt.gtfs.zone`. A Traefik
+  Host that does not end in its `root_domain` up as a bucket global alias, so a
+  bucket served there must be aliased literally by its hostname. A Traefik
   Host-rewrite middleware in front of it rewrites the bucket name and returns a
   404 that never says why. On the S3 side, `S3_REGION` is part of the SigV4
   signature, so a mismatch with `garage.toml`'s `s3_region` is a 403 rather than a

@@ -1,5 +1,5 @@
 # GTFS-realtime feeds the rt-archive recorder polls and the TIDES build
-# publishes to archive.rt.gtfs.zone. A feed is turned off with
+# publishes to rt-archive.gtfs.zone. A feed is turned off with
 # `enabled: false` and never deleted, so its partitions and packages stay.
 #
 # Per feed:
