@@ -138,6 +138,16 @@ endpoints:
     alerts:
       - type: telegram
 
+  - name: diff.gtfs.zone
+    group: Sites
+    url: https://diff.gtfs.zone/
+    interval: 120s
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+    alerts:
+      - type: telegram
+
   - name: list.gtfs.zone
     group: Sites
     url: https://list.gtfs.zone/
@@ -444,6 +454,12 @@ external-endpoints:
   # at 06:17 UTC: success when no lockfile has a critical (CVSS >= 9.0) finding.
   # 30h covers one missed daily run. Shown on the page only, no alerts.
   - name: gtfs-zone-db-models
+    group: Vulnerabilities
+    token: "${GATUS_VULN_SCAN_TOKEN}"
+    heartbeat:
+      interval: 30h
+
+  - name: gtfs-zone-diff
     group: Vulnerabilities
     token: "${GATUS_VULN_SCAN_TOKEN}"
     heartbeat:

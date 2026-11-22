@@ -18,7 +18,7 @@ locals {
   # Origins allowed to use the CORS proxy on cors.gtfs.zone, plus local dev
   # servers on any port (":*" matches any port in the Worker).
   cors_proxy_origins = concat(
-    [for h in ["edit", "viz.rt", "sites", "list", "manage.rt"] : "https://${h}.${local.zone}"],
+    [for h in ["edit", "viz.rt", "sites", "list", "manage.rt", "diff"] : "https://${h}.${local.zone}"],
     ["http://localhost:*", "http://127.0.0.1:*"],
   )
 }
