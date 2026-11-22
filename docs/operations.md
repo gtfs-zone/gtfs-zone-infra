@@ -131,8 +131,7 @@ and `localhost` targets, strips cookies and credentials, and follows redirects
 target `1.2.3.4` is fetched as `1.2.3.4.sslip.io`, which the public sslip.io DNS
 resolves back to that address. Gatus probes it through `data.gtfs.zone`.
 
-`archive.rt.gtfs.zone` is the legacy rt-archive host, still served by Garage
-and no longer written. The B2 bucket `gtfs-zone-tfstate` (private, keeps prior
+The B2 bucket `gtfs-zone-tfstate` (private, keeps prior
 versions for 90 days, key above) holds only the tofu state.
 
 **Adding a static host:** add it to `static_hosts` in `tofu/locals.tf` with its
