@@ -1,12 +1,13 @@
 # ── rt-delay-estimator (schedule-delay worker) ────────────────────────────────
 # Turns live positions into GTFS-RT Trip Updates. No broker: it sweeps
 # `vehicle:*` in Redis DB1 every POLL_INTERVAL, loads the trip's scheduled
-# stop_times from Postgres, projects the fix onto the route with `compute_delay`,
-# and writes
+# stop_times from Postgres, runs the prediction method that predictors.yaml
+# picks for the tracker's feed (default `gps`), and writes
 #   trip_update:{tracker_id}:{trip_id}[:{start_date}]  → Redis DB1, 300s TTL
 # which is the key rt-api's gtfs_rt.py::trip_updates reads. Without this,
 # Traccar-sourced feeds serve positions but an empty trip_updates.pb: only
-# rt-pollers writes trip updates, and only for its own upstream feeds.
+# rt-pollers writes trip updates, and only for its own upstream feeds (not
+# buswhere, which runs with TRIP_UPDATES=off and leaves Columbia County to this).
 #
 # It never clobbers a richer producer: every record it writes is stamped
 # `source: rt-delay-estimator`, and it skips any key it does not already own, so
@@ -39,7 +40,7 @@ spec:
     spec:
       containers:
         - name: rt-delay-estimator
-          image: ghcr.io/gtfs-zone/gtfs-zone-rt-delay-estimator:v0.3.1
+          image: ghcr.io/gtfs-zone/gtfs-zone-rt-delay-estimator:v0.4.0
           env:
             # DB1: where rt-traccar-receiver and rt-api's /ingest write positions.
             - name: REDIS_URL
@@ -54,3 +55,13 @@ spec:
             # psycopg2 driver: load_stop_times runs sync SQLAlchemy on a thread.
             - name: DATABASE_URL
               value: postgresql+psycopg2://rt_api:$(POSTGRES_RT_API_PASSWORD)@postgres-rw:5432/rt_api
+            - name: PREDICTORS_CONFIG
+              value: /config/predictors.yaml
+          volumeMounts:
+            - name: predictors
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: predictors
+          configMap:
+            name: rt-delay-estimator-predictors

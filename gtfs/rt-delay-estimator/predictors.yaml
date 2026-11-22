@@ -1,0 +1,10 @@
+# Prediction method per feed (keyed by Feed.feed_name) or per tracker (keyed by
+# "<feed name>/<tracker nickname>"). Never key by device_key, it is a secret.
+# Methods and params: gtfs-zone-rt-delay-estimator README.
+default:
+  method: gps
+feeds:
+  # Buses here run early rather than hold, so early arrivals are not floored.
+  columbia-county:
+    method: gps
+    params: {floor_early: false}

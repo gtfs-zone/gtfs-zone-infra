@@ -25,7 +25,7 @@ resources:
 - gatus
 - traccar
 - rt-traccar-receiver.yaml
-- rt-delay-estimator.yaml
+- rt-delay-estimator
 - rt-pollers.yaml
 - rt-archive
 - feed-catalog

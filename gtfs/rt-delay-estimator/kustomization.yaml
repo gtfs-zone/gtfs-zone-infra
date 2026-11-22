@@ -1,0 +1,12 @@
+# rt-delay-estimator: the worker Deployment and its predictors.yaml ConfigMap.
+# The generator hash-suffixes the ConfigMap, so editing predictors.yaml rolls
+# the pod.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: gtfs
+resources:
+  - deployment.yaml
+configMapGenerator:
+  - name: rt-delay-estimator-predictors
+    files:
+      - predictors.yaml
