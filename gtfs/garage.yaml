@@ -62,19 +62,20 @@ data:
     ADMIN="http://garage:3903/v2"
     CAPACITY="${GARAGE_CAPACITY_BYTES:-40000000000}"
 
-    # One line per bucket:
-    #   <bucket> <key name> <access key env> <secret key env> <website> <owner>
+    # One line per bucket and key:
+    #   <bucket> <key name> <access key env> <secret key env> <website> <owner> <write>
     # Each bucket gets its own key, so a compromised pipeline credential
     # reaches one bucket and not the other. `website yes` is what makes the
     # bucket readable over plain HTTP at its own hostname. `owner yes` lets the
     # key change that one bucket's config: Garage refuses PutBucketCors from a
-    # key without it.
+    # key without it. `write no` grants read only.
     BUCKETS="
-    gtfs-feeds      gtfs            S3_ACCESS_KEY                 S3_SECRET_KEY                 no  no
-    crimes.gtfs.zone crimes CRIMES_S3_ACCESS_KEY CRIMES_S3_SECRET_KEY yes no
-    rt-archive rt-archive RT_ARCHIVE_S3_ACCESS_KEY RT_ARCHIVE_S3_SECRET_KEY no no
-    archive.rt.gtfs.zone rt-archive-tides RT_ARCHIVE_TIDES_S3_ACCESS_KEY RT_ARCHIVE_TIDES_S3_SECRET_KEY yes no
-    gtfs-zips feed-catalog-zips FEED_CATALOG_ZIPS_S3_ACCESS_KEY FEED_CATALOG_ZIPS_S3_SECRET_KEY no no
+    gtfs-feeds      gtfs            S3_ACCESS_KEY                 S3_SECRET_KEY                 no  no yes
+    crimes.gtfs.zone crimes CRIMES_S3_ACCESS_KEY CRIMES_S3_SECRET_KEY yes no yes
+    rt-archive rt-archive RT_ARCHIVE_S3_ACCESS_KEY RT_ARCHIVE_S3_SECRET_KEY no no yes
+    archive.rt.gtfs.zone rt-archive-tides RT_ARCHIVE_TIDES_S3_ACCESS_KEY RT_ARCHIVE_TIDES_S3_SECRET_KEY yes no yes
+    gtfs-zips feed-catalog-zips FEED_CATALOG_ZIPS_S3_ACCESS_KEY FEED_CATALOG_ZIPS_S3_SECRET_KEY no no yes
+    gtfs-zips timetable-sites-zips TIMETABLE_SITES_ZIPS_S3_ACCESS_KEY TIMETABLE_SITES_ZIPS_S3_SECRET_KEY no no no
     "
 
     api() {
@@ -109,7 +110,7 @@ data:
       echo "==> layout already applied"
     fi
 
-    echo "$BUCKETS" | while read -r BUCKET KEY_NAME ACCESS_VAR SECRET_VAR WEBSITE OWNER; do
+    echo "$BUCKETS" | while read -r BUCKET KEY_NAME ACCESS_VAR SECRET_VAR WEBSITE OWNER WRITE; do
       [ -n "$BUCKET" ] || continue
       eval "ACCESS_KEY=\${${ACCESS_VAR}:?}"
       eval "SECRET_KEY=\${${SECRET_VAR}:?}"
@@ -135,12 +136,12 @@ data:
           '{accessKeyId:$id,secretAccessKey:$secret,name:$n}')" >/dev/null
       fi
 
-      # AllowBucketKey only sets the flags passed as true, so owner:false never
-      # revokes an existing grant.
-      echo "==> granting ${KEY_NAME} read/write (owner: ${OWNER}) on ${BUCKET}"
+      # AllowBucketKey only sets the flags passed as true, so owner:false or
+      # write:false never revokes an existing grant.
+      echo "==> granting ${KEY_NAME} read (write: ${WRITE}, owner: ${OWNER}) on ${BUCKET}"
       api POST /AllowBucketKey -d "$(jq -nc \
-        --arg b "$bucket_id" --arg id "$ACCESS_KEY" --arg o "$OWNER" \
-        '{bucketId:$b,accessKeyId:$id,permissions:{read:true,write:true,owner:($o == "yes")}}')" \
+        --arg b "$bucket_id" --arg id "$ACCESS_KEY" --arg o "$OWNER" --arg w "$WRITE" \
+        '{bucketId:$b,accessKeyId:$id,permissions:{read:true,write:($w == "yes"),owner:($o == "yes")}}')" \
         >/dev/null
 
       # Website access is what the s3_web endpoint serves from; without it a
@@ -365,6 +366,17 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: FEED_CATALOG_ZIPS_S3_SECRET_KEY
+            # timetable-sites' read-only pair on gtfs-zips.
+            - name: TIMETABLE_SITES_ZIPS_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: TIMETABLE_SITES_ZIPS_S3_ACCESS_KEY
+            - name: TIMETABLE_SITES_ZIPS_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: TIMETABLE_SITES_ZIPS_S3_SECRET_KEY
           volumeMounts:
             - name: config
               mountPath: /etc/garage
