@@ -43,6 +43,6 @@ images:
 - digest: sha256:73c4d7d52e4d93373857f7debe92361d840dd12c862621409ed774dd93c10f57
   name: ghcr.io/gtfs-zone/gtfs-zone-rt-archive
   newName: ghcr.io/gtfs-zone/gtfs-zone-rt-archive
-- digest: sha256:095008e443a48375f511531dc7b791e4e87f64eea806e88a57398385f8604938
+- digest: sha256:91e7a3c6cbcaf721fbb207c48043f6fd3d42de14dd8c02c36a7f4050125e1d70
   name: ghcr.io/gtfs-zone/gtfs-zone-timetable-sites
   newName: ghcr.io/gtfs-zone/gtfs-zone-timetable-sites
