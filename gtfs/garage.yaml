@@ -74,6 +74,7 @@ data:
     rt-archive rt-archive RT_ARCHIVE_S3_ACCESS_KEY RT_ARCHIVE_S3_SECRET_KEY no no yes
     gtfs-zips feed-catalog-zips FEED_CATALOG_ZIPS_S3_ACCESS_KEY FEED_CATALOG_ZIPS_S3_SECRET_KEY no no yes
     gtfs-zips timetable-sites-zips TIMETABLE_SITES_ZIPS_S3_ACCESS_KEY TIMETABLE_SITES_ZIPS_S3_SECRET_KEY no no no
+    gtfs-zips crimes-zips CRIMES_ZIPS_S3_ACCESS_KEY CRIMES_ZIPS_S3_SECRET_KEY no no no
     "
 
     api() {
@@ -364,6 +365,17 @@ spec:
                 secretKeyRef:
                   name: gtfs-app-secrets
                   key: TIMETABLE_SITES_ZIPS_S3_SECRET_KEY
+            # crimes' read-only pair on gtfs-zips.
+            - name: CRIMES_ZIPS_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: CRIMES_ZIPS_S3_ACCESS_KEY
+            - name: CRIMES_ZIPS_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtfs-app-secrets
+                  key: CRIMES_ZIPS_S3_SECRET_KEY
           volumeMounts:
             - name: config
               mountPath: /etc/garage
