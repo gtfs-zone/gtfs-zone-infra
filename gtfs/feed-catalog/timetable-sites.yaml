@@ -93,6 +93,13 @@ spec:
               value: "4"
             - name: TIMETABLE_SITES_WORKER_MEMORY
               value: "2500000000"
+            # The cap counts reserved address space: mimalloc and per-thread
+            # glibc arenas reserve about 1.7 GB per worker once Arrow's S3
+            # threads start (the locality read). System pool, two arenas.
+            - name: ARROW_DEFAULT_MEMORY_POOL
+              value: system
+            - name: MALLOC_ARENA_MAX
+              value: "2"
             # Heartbeat pushed once 95% of sites are built for the day.
             - name: GATUS_URL
               value: http://gatus:8080
