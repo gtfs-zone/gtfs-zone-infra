@@ -103,6 +103,10 @@ spec:
             # UK BODS passed 2 GB on 2026-11-21.
             - name: FETCH_MAX_BYTES
               value: "4000000000"
+            # pyarrow picks its pool at import, before a capped worker sets
+            # this; mimalloc reserves a 1 GiB arena that counts against the cap.
+            - name: ARROW_DEFAULT_MEMORY_POOL
+              value: system
             # A refresh token, exchanged for a short-lived access token at the
             # start of each run. Empty is not an error: the run then covers
             # Transitland and the curated set alone.
