@@ -117,7 +117,7 @@ repoServer:
     - name: ksops
       command:
         - /var/run/argocd/argocd-cmp-server
-      image: quay.io/argoproj/argocd:v3.4.5
+      image: quay.io/argoproj/argocd:v3.6.3
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
