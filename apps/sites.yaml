@@ -1,4 +1,4 @@
-## apps/sites.yaml: the nginx-served sites (list.gtfs.zone, manage.rt.gtfs.zone)
+## apps/sites.yaml: the nginx-served sites (manage.rt.gtfs.zone, crimes)
 ## and the DNS records for the sites on GitHub Pages (edit, viz.rt).
 ##
 ## Wave 3, same as the gtfs stack: it needs Traefik's IngressRoute CRD (wave 1)

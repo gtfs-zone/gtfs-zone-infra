@@ -31,8 +31,7 @@ sidecar on the argocd-repo-server.
   SOPS-encrypted `secrets/*.enc.yaml`. feed-catalog's CI writes its image
   digest into `gtfs/kustomization.yaml`'s `images:` block.
 - `sites/`: the nginx-served sites (Kustomize, no secrets):
-  `manage.rt.gtfs.zone` (rt-manager) and `list.gtfs.zone`
-  (feed-list), plus `pages-dns.yaml`, the DNSEndpoint CNAMEs for
+  `manage.rt.gtfs.zone` (rt-manager), plus `pages-dns.yaml`, the DNSEndpoint CNAMEs for
   `edit.gtfs.zone` and `viz.rt.gtfs.zone`, which GitHub Pages serves. The
   `gtfs.zone` apex is on Pages too, with its A/AAAA records in
   `tofu/dns.tf`. Each nginx site is an nginx image
