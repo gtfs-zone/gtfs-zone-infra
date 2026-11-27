@@ -1,4 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>gtfs-zone/.github//renovate-config/default"]
+  "extends": ["github>gtfs-zone/.github//renovate-config/default"],
+  "packageRules": [
+    {
+      "description": "Argo CD is upgraded by hand with helm upgrade; the ksops sidecar image must match that release",
+      "matchDepNames": ["quay.io/argoproj/argocd"],
+      "enabled": false
+    }
+  ]
 }
