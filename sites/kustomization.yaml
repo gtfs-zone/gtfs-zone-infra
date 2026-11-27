@@ -1,4 +1,4 @@
-# sites: the nginx-served sites (list, manage.rt, crimes) and the DNS records for the
+# sites: the nginx-served sites (manage.rt, crimes) and the DNS records for the
 # sites GitHub Pages serves (gtfs.zone's subdomains in pages-dns.yaml). Each
 # nginx site is an immutable image served by its own Deployment.
 #
@@ -17,15 +17,11 @@ resources:
 - namespace.yaml
 - pages-dns.yaml
 - rt-manager.yaml
-- feed-list.yaml
 - crimes.yaml
 images:
 - digest: sha256:63de1f6d3927b245f67671c2765a0210184f68f1a91fb8ecbd2c6690229ea685
   name: ghcr.io/gtfs-zone/gtfs-zone-crimes-web
   newName: ghcr.io/gtfs-zone/gtfs-zone-crimes-web
-- digest: sha256:69b89c81b33d3eba9dc995a35ad62e09915fd5dd2e030c4197a63edb23b191ff
-  name: ghcr.io/gtfs-zone/gtfs-zone-feed-list
-  newName: ghcr.io/gtfs-zone/gtfs-zone-feed-list
 - digest: sha256:b1fe8786fda879970d51d700ac617207e8ca5799f7ecf66affa97dcb1f853757
   name: ghcr.io/gtfs-zone/gtfs-zone-rt-manager
   newName: ghcr.io/gtfs-zone/gtfs-zone-rt-manager

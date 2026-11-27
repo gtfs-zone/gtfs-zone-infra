@@ -25,12 +25,12 @@ The stack is built from these open-source projects:
 | [gtfs-zone-dev-stack](https://github.com/gtfs-zone/gtfs-zone-dev-stack) | Docker Compose stack for local development and testing |
 | [gtfs-zone-homepage](https://github.com/gtfs-zone/gtfs-zone-homepage) | Static homepage at gtfs.zone |
 | [gtfs-zone-feed-catalog](https://github.com/gtfs-zone/gtfs-zone-feed-catalog) | Dagster pipeline: the GTFS source catalog, its reachability checks and logical feeds, published to data.gtfs.zone |
-| [gtfs-zone-feed-list](https://github.com/gtfs-zone/gtfs-zone-feed-list) | list.gtfs.zone, the source catalog as a list and a world map |
+| [gtfs-zone-feed-list](https://github.com/gtfs-zone/gtfs-zone-feed-list) | A mirror of the data.gtfs.zone artifacts, with a README of counts |
 | [gtfs-zone-editor](https://github.com/gtfs-zone/gtfs-zone-editor) | GTFS editor at edit.gtfs.zone |
 | [gtfs-zone-rt-viewer](https://github.com/gtfs-zone/gtfs-zone-rt-viewer) | Realtime visualiser at viz.rt.gtfs.zone |
 | [gtfs-zone-rt-manager](https://github.com/gtfs-zone/gtfs-zone-rt-manager) | Admin SPA at manage.rt.gtfs.zone, on rt-api's JSON API |
 | [gtfs-zone-timetable-sites](https://github.com/gtfs-zone/gtfs-zone-timetable-sites) | Static timetable sites at sites.gtfs.zone, a Dagster code location in feed-catalog's instance |
-| [gtfs-zone-web-common](https://github.com/gtfs-zone/gtfs-zone-web-common) | Shared browser library and app shell for the editor, rt-viewer, rt-manager and feed-list |
+| [gtfs-zone-web-common](https://github.com/gtfs-zone/gtfs-zone-web-common) | Shared browser library and app shell for the editor, rt-viewer, and rt-manager |
 
 This repo provides the Kubernetes (k3s + ArgoCD) deployment that wires them
 together with supporting infrastructure.
@@ -89,7 +89,6 @@ flowchart LR
 | `data.<domain>` | Public source-catalog artifacts (`feeds.json`, `sources.json`, ...) from a Cloudflare R2 bucket |
 | `cors.<domain>` | CORS proxy for feed fetches from the web apps (Cloudflare Worker) |
 | `dagster.<domain>` | Dagster UI for feed-catalog (gated on the `gtfs-admins` group) |
-| `list.<domain>` | Source catalog list and world map (feed-list) |
 | `edit.<domain>` | GTFS editor (gtfs-zone-editor) |
 | `viz.rt.<domain>` | Realtime visualiser (gtfs-zone-rt-viewer) |
 
@@ -420,8 +419,8 @@ feed-catalog ingests Transitland Atlas and the Mobility Database once a day,
 checks whether each endpoint answers, keeps history per normalized URL in its
 own Postgres database, and publishes JSON to `data.gtfs.zone`. The frontends
 read those artifacts at runtime rather than shipping a catalog baked in at build
-time: the edit and viz load modals list `feeds.json`, and `list.gtfs.zone` draws
-the whole catalog on a map.
+time: the edit and viz load modals list `feeds.json`, and `sites.gtfs.zone`
+builds a timetable site per feed.
 
 ```mermaid
 flowchart LR
@@ -432,13 +431,13 @@ flowchart LR
     pg[("Postgres<br>feed_catalog")]
     bucket[("data.gtfs.zone<br>R2 bucket")]
     edit["edit / viz<br>load modal"]
-    list["list.gtfs.zone"]
+    sites["sites.gtfs.zone"]
 
     tl & mdb & ex --> gc
     gc -->|"check history"| pg
     gc -->|"feeds.json · sources.json · status.json<br>examples.json · summary.json · manifest.json"| bucket
     bucket --> edit
-    bucket --> list
+    bucket --> sites
 ```
 
 Catalog rows (`sources.json`) are kept one per catalog entry and never merged.
@@ -705,7 +704,7 @@ group membership is per-user and not part of the realm import.
    positions and no error.
 5. Trigger feed-catalog's first run from `https://dagster.<domain>` rather than
    waiting for the schedule; `data.<domain>/manifest.json` appears once it
-   finishes, and the load modals and `list.<domain>` are empty until then.
+   finishes, and the load modals are empty until then.
 
 ## Updating
 
